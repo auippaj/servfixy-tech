@@ -293,7 +293,7 @@ function LoginScreen({ onLogin, lang, setLang }) {
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '8px' }}>
             <img src="https://i.imgur.com/eX28z4J.png" style={{ height: '36px' }} alt="Servfixy" />
-            <span style={{ fontSize: '26px', fontWeight: '700', color: '#1B3A6B' }}>Servfixy</span>
+            
           </div>
           <p style={{ color: '#6b7280', margin: '0 0 12px', fontSize: '14px' }}>{t.techPortal}</p>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
