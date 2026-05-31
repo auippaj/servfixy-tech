@@ -292,7 +292,7 @@ function LoginScreen({ onLogin, lang, setLang }) {
       <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '40px 36px', width: '100%', maxWidth: '400px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '8px' }}>
-            <div style={{ width: '40px', height: '40px', backgroundColor: '#14B8A6', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '22px' }}>S</div>
+            <img src="https://i.imgur.com/eX28z4J.png" style={{ height: '36px' }} alt="Servfixy" />
             <span style={{ fontSize: '26px', fontWeight: '700', color: '#1B3A6B' }}>Servfixy</span>
           </div>
           <p style={{ color: '#6b7280', margin: '0 0 12px', fontSize: '14px' }}>{t.techPortal}</p>
