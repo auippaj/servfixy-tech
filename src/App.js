@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
-const API = 'http://localhost:3001/api';
+const API = 'https://servfixy-production.up.railway.app/api';
 
 const statusColor = { pending: '#6b7280', assigned: '#3b82f6', in_progress: '#f97316', completed: '#22c55e' };
 const tierColor = { T1: '#ef4444', T2: '#f97316', T3: '#3b82f6', T4: '#a855f7' };
