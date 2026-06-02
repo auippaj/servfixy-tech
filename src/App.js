@@ -426,7 +426,16 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
   const requestGPS = () => {
     setGpsStatus('checking');
     setTimeout(() => {
-      setGpsCoords({ lat: 29.7604, lng: -95.3698 });
+      navigator.geolocation.getCurrentPosition(
+  (position) => {
+    setGpsCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
+  },
+  (err) => {
+    console.error('GPS error:', err);
+    setGpsCoords(null);
+  },
+  { enableHighAccuracy: true, timeout: 10000 }
+);
       setGpsStatus('confirmed');
       setTimeout(() => setStep('rvc'), 1500);
     }, 1200);
@@ -1075,7 +1084,7 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
               {i === 9 && !contactMethod && <button onClick={(e) => { e.stopPropagation(); setShowContactPicker(true); }} style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 }}>Log →</button>}
               {i === 9 && contactMethod && <span style={{ fontSize: '10px', color: '#14B8A6', fontWeight: '700' }}>✓</span>}
               {i === 11 && !gpsOut && (
-                <button onClick={(e) => { e.stopPropagation(); setGpsOutLoading(true); setTimeout(() => { const coords = { lat: 29.7604, lng: -95.3698 }; setGpsOut(coords); setGpsOutLoading(false); setChecked(prev => prev.map((v, idx) => idx === 11 ? true : v)); }, 1200); }} style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 }}>
+                <button onClick={(e) => { e.stopPropagation(); setGpsOutLoading(true); navigator.geolocation.getCurrentPosition((position) => { const coords = { lat: position.coords.latitude, lng: position.coords.longitude }; setGpsOut(coords); setGpsOutLoading(false); setChecked(prev => prev.map((v, idx) => idx === 11 ? true : v)); }, (err) => { console.error('GPS error:', err); setGpsOutLoading(false); }, { enableHighAccuracy: true, timeout: 10000 }); }} style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 }}>
                   {gpsOutLoading ? '...' : '📍 Check Out'}
                 </button>
               )}
