@@ -419,7 +419,8 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
   const [touch3Fired, setTouch3Fired] = useState(false);
   const [showRvcPicker, setShowRvcPicker] = useState(false);
   const [rvcMethod, setRvcMethod] = useState('');
-  const [ppeConfirmed, setPpeConfirmed] = useState(false);
+  const steps = isHvac ? [t.gpsStep, t.rvcStep, 'PPE', 'Gauges', t.photosStep] : [t.gpsStep, t.rvcStep, 'PPE', t.photosStep];
+  const stepIndex = step === 'gps' ? 0 : step === 'rvc' ? 1 : step === 'ppe' ? 2 : step === 'hvac' ? 3 : (isHvac ? 4 : 3);
   const photoInputRef = useRef(null);
   const rvcCode = generateRVC(job.id);
 
@@ -459,7 +460,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
         await axios.patch(`${API}/touchpoints/${job.id}/3`, { fired_by: tech.email, notes: `RVC: ${rvcCode}` }, { headers: { Authorization: `Bearer ${token}` } });
       } catch { }
     }
-    onComplete({ rvc: rvcCode, photos, coords: gpsCoords, rvcMethod, ppeConfirmed });
+    onComplete({ rvc: rvcCode, photos, coords: gpsCoords, rvcMethod, ppeConfirmed, hvacLow, hvacHigh });
   };
 
   const steps = [t.gpsStep, t.rvcStep, 'PPE', t.photosStep];
@@ -568,7 +569,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
               );
             })}
           </div>
-          <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginBottom: '10px' }} onClick={() => { setPpeConfirmed(true); setStep('photos'); }}>
+          <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginBottom: '10px' }} onClick={() => { setPpeConfirmed(true); setStep(isHvac ? 'hvac' : 'photos'); }}>
             {lang === 'es' ? 'Confirmo - Tengo mi EPP' : 'Confirmed - I have my PPE'}
           </button>
           <button style={{ backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', width: '100%' }} onClick={() => setStep('rvc')}>
@@ -576,7 +577,35 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
           </button>
         </div>
       )}
-
+{step === 'hvac' && (
+        <div style={{ padding: '24px 16px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '16px' }}>
+            <div style={{ fontSize: '56px', marginBottom: '16px', textAlign: 'center' }}>🌡️</div>
+            <div style={{ fontSize: '18px', fontWeight: '700', color: '#1B3A6B', marginBottom: '8px', textAlign: 'center' }}>{lang === 'es' ? 'Lecturas de manometro' : 'Gauge Readings'}</div>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px', textAlign: 'center', lineHeight: '1.5' }}>{lang === 'es' ? 'Conecta tus manometros y registra las presiones antes de comenzar.' : 'Connect your gauges and document pressures before starting work.'}</div>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '8px' }}>{lang === 'es' ? 'Presion lado bajo (PSI)' : 'Low Side Pressure (PSI)'}</label>
+              <input type="number" value={hvacLow} onChange={e => setHvacLow(e.target.value)} placeholder="e.g. 70" style={{ width: '100%', padding: '14px', border: `2px solid ${hvacLow ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '20px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
+            </div>
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '8px' }}>{lang === 'es' ? 'Presion lado alto (PSI)' : 'High Side Pressure (PSI)'}</label>
+              <input type="number" value={hvacHigh} onChange={e => setHvacHigh(e.target.value)} placeholder="e.g. 250" style={{ width: '100%', padding: '14px', border: `2px solid ${hvacHigh ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '20px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
+            </div>
+            {hvacLow && hvacHigh && (
+              <div style={{ backgroundColor: '#f0fdf4', borderRadius: '10px', padding: '12px', border: '1px solid #22c55e', marginBottom: '16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '13px', color: '#15803d', fontWeight: '600' }}>✅ {lang === 'es' ? 'Lecturas registradas' : 'Readings logged'}</div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>Low: {hvacLow} PSI · High: {hvacHigh} PSI</div>
+              </div>
+            )}
+          </div>
+          <button style={{ backgroundColor: hvacLow && hvacHigh ? '#1B3A6B' : '#d1d5db', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: hvacLow && hvacHigh ? 'pointer' : 'not-allowed', width: '100%', marginBottom: '10px' }} disabled={!hvacLow || !hvacHigh} onClick={() => setStep('photos')}>
+            {hvacLow && hvacHigh ? (lang === 'es' ? 'Continuar a fotos →' : 'Continue to Photos →') : (lang === 'es' ? 'Ingresa ambas lecturas' : 'Enter both readings')}
+          </button>
+          <button style={{ backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', width: '100%' }} onClick={() => setStep('ppe')}>
+            {lang === 'es' ? 'Volver' : 'Back'}
+          </button>
+        </div>
+      )}
       {step === 'photos' && (
         <div style={{ padding: '24px 16px' }}>
           <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '16px' }}>
@@ -1354,6 +1383,8 @@ export default function App() {
         time_on_site: diagData?.timeOnSite,
         checklist_completed: data.totalChecked,
         signed: data.signed,
+        hvac_low_side_psi: checkInData?.hvacLow || null,
+        hvac_high_side_psi: checkInData?.hvacHigh || null,
       }, { headers: { Authorization: `Bearer ${token}` } });
       try {
         await axios.patch(`${API}/touchpoints/${selectedJob.id}/5`, { fired_by: tech.email, notes: `Gate 1 submitted. ${data.totalChecked} checklist items completed.` }, { headers: { Authorization: `Bearer ${token}` } });
