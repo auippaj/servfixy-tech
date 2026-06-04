@@ -419,6 +419,14 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
   const [touch3Fired, setTouch3Fired] = useState(false);
   const [showRvcPicker, setShowRvcPicker] = useState(false);
   const [rvcMethod, setRvcMethod] = useState('');
+  const [ppeConfirmed, setPpeConfirmed] = useState(false);
+  const [hvacLow, setHvacLow] = useState('');
+  const [hvacHigh, setHvacHigh] = useState('');
+  const [refrigerantType, setRefrigerantType] = useState('');
+  const [expansionValve, setExpansionValve] = useState('TXV');
+  const [suctionTemp, setSuctionTemp] = useState('');
+  const [liquidTemp, setLiquidTemp] = useState('');
+  const isHvac = job?.title?.toLowerCase().includes('hvac') || job?.description?.toLowerCase().includes('hvac') || job?.title?.toLowerCase().includes('ac ') || job?.title?.toLowerCase().includes('air') || job?.description?.toLowerCase().includes('cooling') || job?.description?.toLowerCase().includes('heating') || job?.category?.toLowerCase().includes('hvac') || (job?.title || '').toLowerCase().includes('hvac') || (job?.description || '').toLowerCase().includes('hvac') || (job?.description || '').toLowerCase().includes('ac ') || (job?.description || '').toLowerCase().includes('cold');
   const steps = isHvac ? [t.gpsStep, t.rvcStep, 'PPE', 'Gauges', t.photosStep] : [t.gpsStep, t.rvcStep, 'PPE', t.photosStep];
   const stepIndex = step === 'gps' ? 0 : step === 'rvc' ? 1 : step === 'ppe' ? 2 : step === 'hvac' ? 3 : (isHvac ? 4 : 3);
   const photoInputRef = useRef(null);
@@ -460,11 +468,10 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
         await axios.patch(`${API}/touchpoints/${job.id}/3`, { fired_by: tech.email, notes: `RVC: ${rvcCode}` }, { headers: { Authorization: `Bearer ${token}` } });
       } catch { }
     }
-    onComplete({ rvc: rvcCode, photos, coords: gpsCoords, rvcMethod, ppeConfirmed, hvacLow, hvacHigh });
+    onComplete({ rvc: rvcCode, photos, coords: gpsCoords, rvcMethod, ppeConfirmed, hvacLow, hvacHigh, refrigerantType, expansionValve, suctionTemp, liquidTemp });
   };
 
-  const steps = [t.gpsStep, t.rvcStep, 'PPE', t.photosStep];
-  const stepIndex = step === 'gps' ? 0 : step === 'rvc' ? 1 : step === 'ppe' ? 2 : 3;
+  
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', paddingBottom: '80px' }}>
@@ -577,35 +584,139 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
           </button>
         </div>
       )}
-{step === 'hvac' && (
-        <div style={{ padding: '24px 16px' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '16px' }}>
-            <div style={{ fontSize: '56px', marginBottom: '16px', textAlign: 'center' }}>🌡️</div>
-            <div style={{ fontSize: '18px', fontWeight: '700', color: '#1B3A6B', marginBottom: '8px', textAlign: 'center' }}>{lang === 'es' ? 'Lecturas de manometro' : 'Gauge Readings'}</div>
-            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px', textAlign: 'center', lineHeight: '1.5' }}>{lang === 'es' ? 'Conecta tus manometros y registra las presiones antes de comenzar.' : 'Connect your gauges and document pressures before starting work.'}</div>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '8px' }}>{lang === 'es' ? 'Presion lado bajo (PSI)' : 'Low Side Pressure (PSI)'}</label>
-              <input type="number" value={hvacLow} onChange={e => setHvacLow(e.target.value)} placeholder="e.g. 70" style={{ width: '100%', padding: '14px', border: `2px solid ${hvacLow ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '20px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
-            </div>
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '8px' }}>{lang === 'es' ? 'Presion lado alto (PSI)' : 'High Side Pressure (PSI)'}</label>
-              <input type="number" value={hvacHigh} onChange={e => setHvacHigh(e.target.value)} placeholder="e.g. 250" style={{ width: '100%', padding: '14px', border: `2px solid ${hvacHigh ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '20px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
-            </div>
-            {hvacLow && hvacHigh && (
-              <div style={{ backgroundColor: '#f0fdf4', borderRadius: '10px', padding: '12px', border: '1px solid #22c55e', marginBottom: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '13px', color: '#15803d', fontWeight: '600' }}>✅ {lang === 'es' ? 'Lecturas registradas' : 'Readings logged'}</div>
-                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>Low: {hvacLow} PSI · High: {hvacHigh} PSI</div>
+{step === 'hvac' && (() => {
+        const PT_TABLES = {
+          'R-22':   { low: [[0,-41],[10,-30],[20,-21],[30,-13],[40,-6],[50,0],[60,6],[70,11],[80,16],[90,20],[100,24],[110,28],[120,32],[130,35],[140,38],[150,41],[160,44],[170,47],[180,49],[190,52],[200,54],[220,59],[240,63],[260,67],[280,71],[300,75]], high: [[150,41],[175,47],[200,54],[225,59],[250,64],[275,68],[300,73],[325,77],[350,81],[375,85],[400,88],[425,91],[450,94],[475,97],[500,100]] },
+          'R-410A': { low: [[0,-64],[10,-55],[20,-47],[30,-40],[40,-34],[50,-28],[60,-23],[70,-18],[80,-13],[90,-9],[100,-5],[110,-1],[120,3],[130,6],[140,9],[150,12],[160,15],[170,18],[180,21],[190,23],[200,26],[220,30],[240,35],[260,39],[280,43],[300,46]], high: [[200,26],[225,31],[250,36],[275,40],[300,44],[325,48],[350,52],[375,55],[400,58],[425,61],[450,64],[475,67],[500,70]] },
+          'R-32':   { low: [[0,-52],[10,-44],[20,-37],[30,-30],[40,-24],[50,-18],[60,-13],[70,-8],[80,-4],[90,0],[100,4],[110,7],[120,11],[130,14],[140,17],[150,20],[160,23],[170,26],[180,28],[190,31],[200,33],[220,38],[240,42],[260,46],[280,50],[300,54]], high: [[200,33],[225,38],[250,42],[275,46],[300,50],[325,54],[350,58],[375,61],[400,64],[425,67],[450,70],[475,73],[500,76]] },
+          'R-454B': { low: [[0,-55],[10,-47],[20,-39],[30,-32],[40,-26],[50,-20],[60,-15],[70,-10],[80,-5],[90,-1],[100,3],[110,7],[120,10],[130,13],[140,16],[150,19],[160,22],[170,25],[180,27],[190,30],[200,32],[220,37],[240,41],[260,45],[280,49],[300,53]], high: [[200,32],[225,37],[250,41],[275,46],[300,50],[325,54],[350,57],[375,61],[400,64],[425,67],[450,70],[475,73],[500,76]] },
+          'R-407C': { low: [[0,-45],[10,-35],[20,-26],[30,-18],[40,-11],[50,-4],[60,2],[70,7],[80,13],[90,17],[100,22],[110,26],[120,30],[130,34],[140,37],[150,41],[160,44],[170,47],[180,50],[190,52],[200,55],[220,60],[240,64],[260,68],[280,72],[300,76]], high: [[150,41],[175,47],[200,54],[225,59],[250,64],[275,69],[300,73],[325,77],[350,81],[375,85],[400,89],[425,92],[450,95],[475,98],[500,101]] },
+          'R-134a': { low: [[0,-22],[5,-19],[10,-16],[15,-13],[20,-10],[25,-7],[30,-5],[35,-2],[40,0],[45,2],[50,5],[55,7],[60,9],[65,11],[70,13],[75,15],[80,17],[85,19],[90,21],[95,22],[100,24],[110,28],[120,31],[130,34],[140,37],[150,40]], high: [[100,24],[110,28],[120,31],[130,34],[140,37],[150,40],[160,43],[170,46],[175,47],[180,49],[190,51],[200,54],[210,56],[220,58],[230,60],[240,62],[250,64]] },
+        };
+        const getPT = (table, psi) => {
+          if (!table || !psi) return null;
+          const p = parseFloat(psi);
+          if (isNaN(p)) return null;
+          for (let i = 0; i < table.length - 1; i++) {
+            const [p1, t1] = table[i];
+            const [p2, t2] = table[i + 1];
+            if (p >= p1 && p <= p2) return t1 + (t2 - t1) * ((p - p1) / (p2 - p1));
+          }
+          if (p < table[0][0]) return table[0][1];
+          return table[table.length - 1][1];
+        };
+        const refData = PT_TABLES[refrigerantType];
+        const lowSatTemp = refData ? getPT(refData.low, hvacLow) : null;
+        const highSatTemp = refData ? getPT(refData.high, hvacHigh) : null;
+        const superheat = (lowSatTemp !== null && suctionTemp !== '') ? parseFloat(suctionTemp) - lowSatTemp : null;
+        const subcool = (highSatTemp !== null && liquidTemp !== '') ? highSatTemp - parseFloat(liquidTemp) : null;
+        const RANGES = {
+          'R-22':   { superheat: { TXV: [8,15], 'Fixed Orifice': [10,25] }, subcool: { TXV: [10,18], 'Fixed Orifice': [5,15] } },
+          'R-410A': { superheat: { TXV: [8,15], 'Fixed Orifice': [10,20] }, subcool: { TXV: [10,18], 'Fixed Orifice': [5,10] } },
+          'R-32':   { superheat: { TXV: [8,15], 'Fixed Orifice': [10,20] }, subcool: { TXV: [10,18], 'Fixed Orifice': [5,10] } },
+          'R-454B': { superheat: { TXV: [8,15], 'Fixed Orifice': [10,20] }, subcool: { TXV: [10,18], 'Fixed Orifice': [5,10] } },
+          'R-407C': { superheat: { TXV: [8,15], 'Fixed Orifice': [10,25] }, subcool: { TXV: [10,18], 'Fixed Orifice': [5,15] } },
+          'R-134a': { superheat: { TXV: [8,15], 'Fixed Orifice': [10,20] }, subcool: { TXV: [10,18], 'Fixed Orifice': [5,10] } },
+        };
+        const getStatus = (val, type) => {
+          if (val === null || !refrigerantType) return null;
+          const range = RANGES[refrigerantType]?.[type]?.[expansionValve];
+          if (!range) return null;
+          const [lo, hi] = range;
+          if (val >= lo && val <= hi) return 'green';
+          if (val >= lo - 2 && val <= hi + 2) return 'yellow';
+          return 'red';
+        };
+        const shStatus = getStatus(superheat, 'superheat');
+        const scStatus = getStatus(subcool, 'subcool');
+        const statusStyle = (s) => s === 'green' ? { bg: '#f0fdf4', border: '#22c55e', text: '#15803d', icon: '🟢' } : s === 'yellow' ? { bg: '#fefce8', border: '#fbbf24', text: '#92400e', icon: '🟡' } : { bg: '#fef2f2', border: '#ef4444', text: '#dc2626', icon: '🔴' };
+        const canContinue = refrigerantType && hvacLow && hvacHigh && suctionTemp && liquidTemp;
+        return (
+          <div style={{ padding: '16px' }}>
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '12px' }}>
+              <div style={{ fontSize: '24px', textAlign: 'center', marginBottom: '8px' }}>🌡️</div>
+              <div style={{ fontSize: '17px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px', textAlign: 'center' }}>{lang === 'es' ? 'Diagnostico HVAC' : 'HVAC Diagnostics'}</div>
+              <div style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', marginBottom: '20px' }}>{lang === 'es' ? 'Conecta manometros y registra lecturas' : 'Connect gauges and record all readings'}</div>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de refrigerante' : 'Refrigerant Type'} <span style={{ color: '#ef4444' }}>*</span></label>
+                <select value={refrigerantType} onChange={e => setRefrigerantType(e.target.value)} style={{ width: '100%', padding: '12px', border: `2px solid ${refrigerantType ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '15px', fontWeight: '700', color: '#1B3A6B', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                  <option value="">{lang === 'es' ? 'Seleccionar refrigerante...' : 'Select refrigerant...'}</option>
+                  {['R-22', 'R-410A', 'R-32', 'R-454B', 'R-407C', 'R-134a'].map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
               </div>
-            )}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de valvula' : 'Expansion Valve'}</label>
+                <div style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e5e7eb' }}>
+                  {['TXV', 'Fixed Orifice'].map(v => (
+                    <button key={v} onClick={() => setExpansionValve(v)} style={{ flex: 1, padding: '10px', border: 'none', cursor: 'pointer', backgroundColor: expansionValve === v ? '#1B3A6B' : '#f9fafb', color: expansionValve === v ? 'white' : '#6b7280', fontWeight: '700', fontSize: '13px' }}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>{lang === 'es' ? 'TXV es el predeterminado — cambia si la unidad usa orificio fijo' : 'TXV is default — change if unit uses fixed orifice'}</div>
+              </div>
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginBottom: '8px' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔵 {lang === 'es' ? 'Lado bajo (succion)' : 'Low Side (Suction)'}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{lang === 'es' ? 'Presion (PSI)' : 'Pressure (PSI)'}</label>
+                    <input type="number" value={hvacLow} onChange={e => setHvacLow(e.target.value)} placeholder="e.g. 70" style={{ width: '100%', padding: '12px', border: `2px solid ${hvacLow ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
+                    {hvacLow && lowSatTemp !== null && <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', textAlign: 'center' }}>Sat. Temp: {lowSatTemp.toFixed(1)}°F</div>}
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{lang === 'es' ? 'Temp linea succion (°F)' : 'Suction Line Temp (°F)'}</label>
+                    <input type="number" value={suctionTemp} onChange={e => setSuctionTemp(e.target.value)} placeholder="e.g. 55" style={{ width: '100%', padding: '12px', border: `2px solid ${suctionTemp ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
+                  </div>
+                </div>
+                {superheat !== null && (
+                  <div style={{ backgroundColor: statusStyle(shStatus).bg, borderRadius: '10px', padding: '12px 16px', border: `2px solid ${statusStyle(shStatus).border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '600' }}>{lang === 'es' ? 'SUPERCALENTAMIENTO' : 'SUPERHEAT'}</div>
+                        <div style={{ fontSize: '26px', fontWeight: '800', color: statusStyle(shStatus).text }}>{superheat.toFixed(1)}°F</div>
+                        {refrigerantType && <div style={{ fontSize: '11px', color: '#9ca3af' }}>{lang === 'es' ? 'Rango aceptable' : 'Acceptable range'}: {RANGES[refrigerantType]?.superheat?.[expansionValve]?.[0]}–{RANGES[refrigerantType]?.superheat?.[expansionValve]?.[1]}°F</div>}
+                      </div>
+                      <div style={{ fontSize: '32px' }}>{statusStyle(shStatus).icon}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginTop: '16px' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔴 {lang === 'es' ? 'Lado alto (descarga)' : 'High Side (Discharge)'}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{lang === 'es' ? 'Presion (PSI)' : 'Pressure (PSI)'}</label>
+                    <input type="number" value={hvacHigh} onChange={e => setHvacHigh(e.target.value)} placeholder="e.g. 250" style={{ width: '100%', padding: '12px', border: `2px solid ${hvacHigh ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
+                    {hvacHigh && highSatTemp !== null && <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', textAlign: 'center' }}>Sat. Temp: {highSatTemp.toFixed(1)}°F</div>}
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{lang === 'es' ? 'Temp linea liquido (°F)' : 'Liquid Line Temp (°F)'}</label>
+                    <input type="number" value={liquidTemp} onChange={e => setLiquidTemp(e.target.value)} placeholder="e.g. 95" style={{ width: '100%', padding: '12px', border: `2px solid ${liquidTemp ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
+                  </div>
+                </div>
+                {subcool !== null && (
+                  <div style={{ backgroundColor: statusStyle(scStatus).bg, borderRadius: '10px', padding: '12px 16px', border: `2px solid ${statusStyle(scStatus).border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '600' }}>{lang === 'es' ? 'SUBENFRIAMIENTO' : 'SUBCOOL'}</div>
+                        <div style={{ fontSize: '26px', fontWeight: '800', color: statusStyle(scStatus).text }}>{subcool.toFixed(1)}°F</div>
+                        {refrigerantType && <div style={{ fontSize: '11px', color: '#9ca3af' }}>{lang === 'es' ? 'Rango aceptable' : 'Acceptable range'}: {RANGES[refrigerantType]?.subcool?.[expansionValve]?.[0]}–{RANGES[refrigerantType]?.subcool?.[expansionValve]?.[1]}°F</div>}
+                      </div>
+                      <div style={{ fontSize: '32px' }}>{statusStyle(scStatus).icon}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <button style={{ backgroundColor: canContinue ? '#1B3A6B' : '#d1d5db', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: canContinue ? 'pointer' : 'not-allowed', width: '100%', marginBottom: '10px' }} disabled={!canContinue} onClick={() => setStep('photos')}>
+              {canContinue ? (lang === 'es' ? 'Continuar a fotos →' : 'Continue to Photos →') : (lang === 'es' ? 'Completa todas las lecturas' : 'Complete all readings')}
+            </button>
+            <button style={{ backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', width: '100%' }} onClick={() => setStep('ppe')}>
+              {lang === 'es' ? 'Volver' : 'Back'}
+            </button>
           </div>
-          <button style={{ backgroundColor: hvacLow && hvacHigh ? '#1B3A6B' : '#d1d5db', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: hvacLow && hvacHigh ? 'pointer' : 'not-allowed', width: '100%', marginBottom: '10px' }} disabled={!hvacLow || !hvacHigh} onClick={() => setStep('photos')}>
-            {hvacLow && hvacHigh ? (lang === 'es' ? 'Continuar a fotos →' : 'Continue to Photos →') : (lang === 'es' ? 'Ingresa ambas lecturas' : 'Enter both readings')}
-          </button>
-          <button style={{ backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', width: '100%' }} onClick={() => setStep('ppe')}>
-            {lang === 'es' ? 'Volver' : 'Back'}
-          </button>
-        </div>
-      )}
+        );
+      })()}
       {step === 'photos' && (
         <div style={{ padding: '24px 16px' }}>
           <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '16px' }}>
@@ -1385,6 +1496,12 @@ export default function App() {
         signed: data.signed,
         hvac_low_side_psi: checkInData?.hvacLow || null,
         hvac_high_side_psi: checkInData?.hvacHigh || null,
+        refrigerant_type: checkInData?.refrigerantType || null,
+        expansion_valve_type: checkInData?.expansionValve || null,
+        suction_line_temp: checkInData?.suctionTemp || null,
+        liquid_line_temp: checkInData?.liquidTemp || null,
+        superheat_result: checkInData?.superheat || null,
+        subcool_result: checkInData?.subcool || null,
       }, { headers: { Authorization: `Bearer ${token}` } });
       try {
         await axios.patch(`${API}/touchpoints/${selectedJob.id}/5`, { fired_by: tech.email, notes: `Gate 1 submitted. ${data.totalChecked} checklist items completed.` }, { headers: { Authorization: `Bearer ${token}` } });
