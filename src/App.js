@@ -1452,7 +1452,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
   );
 }
 function VideoCallScreen({ job, token, roomName, onBack, lang }) {
-  const [room, setRoom] = useState(null);
+  const [, setRoom] = useState(null);
   const [error, setError] = useState('');
   const [connecting, setConnecting] = useState(true);
   const [muted, setMuted] = useState(false);
