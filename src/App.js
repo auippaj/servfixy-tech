@@ -1375,7 +1375,7 @@ function SubmittedScreen({ job, tech, token, checkInData, diagData, gate1Data, o
   );
 }
 
-function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, lang }) {
+function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVideoCall, lang }) {
   const t = STRINGS[lang];
   const tier = getTier(job);
   const tLabel = lang === 'es' ? tierLabelEs[tier] : tierLabel[tier];
@@ -1435,6 +1435,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, lang }
           <div style={{ color: 'white', fontWeight: '700', fontSize: '15px', marginBottom: '4px' }}>{t.readyToStart}</div>
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', marginBottom: '16px' }}>{t.checkInRequired}</div>
           <button style={{ backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%' }} onClick={onCheckIn}>{t.beginCheckIn}</button>
+          {job.status === 'in_progress' && <button style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginTop: '10px' }} onClick={() => onVideoCall(job)}>📹 Start Video Call</button>}
         </div>
       )}
       <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
@@ -1450,7 +1451,126 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, lang }
     </div>
   );
 }
+function VideoCallScreen({ job, token, roomName, onBack, lang }) {
+  const [room, setRoom] = useState(null);
+  const [error, setError] = useState('');
+  const [connecting, setConnecting] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const [videoOff, setVideoOff] = useState(false);
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const roomRef = useRef(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    import('twilio-video').then(TwilioVideo => {
+      TwilioVideo.connect(token, { name: roomName, audio: true, video: { width: 640 } })
+        .then(r => {
+          if (cancelled) { r.disconnect(); return; }
+          roomRef.current = r;
+          setRoom(r);
+          setConnecting(false);
+
+          // Attach local video
+          r.localParticipant.videoTracks.forEach(pub => {
+            if (localVideoRef.current) localVideoRef.current.appendChild(pub.track.attach());
+          });
+
+          // Attach existing remote participants
+          r.participants.forEach(participant => {
+            participant.videoTracks.forEach(pub => {
+              if (pub.track && remoteVideoRef.current) remoteVideoRef.current.appendChild(pub.track.attach());
+            });
+            participant.on('trackSubscribed', track => {
+              if (track.kind === 'video' && remoteVideoRef.current) remoteVideoRef.current.appendChild(track.attach());
+            });
+          });
+
+          // Handle new participants
+          r.on('participantConnected', participant => {
+            participant.on('trackSubscribed', track => {
+              if (track.kind === 'video' && remoteVideoRef.current) remoteVideoRef.current.appendChild(track.attach());
+            });
+          });
+        })
+        .catch(err => {
+          if (!cancelled) { setError('Could not connect to video room.'); setConnecting(false); }
+        });
+    });
+    return () => {
+      cancelled = true;
+      if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+    };
+  }, [token, roomName]);
+
+  const handleHangUp = () => {
+    if (roomRef.current) { roomRef.current.disconnect(); roomRef.current = null; }
+    onBack();
+  };
+
+  const toggleMute = () => {
+    if (!roomRef.current) return;
+    roomRef.current.localParticipant.audioTracks.forEach(pub => {
+      muted ? pub.track.enable() : pub.track.disable();
+    });
+    setMuted(!muted);
+  };
+
+  const toggleVideo = () => {
+    if (!roomRef.current) return;
+    roomRef.current.localParticipant.videoTracks.forEach(pub => {
+      videoOff ? pub.track.enable() : pub.track.disable();
+    });
+    setVideoOff(!videoOff);
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#0f1f3d', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <button onClick={handleHangUp} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: '14px', padding: 0 }}>← Back</button>
+        <div style={{ fontSize: '15px', fontWeight: '700' }}>📹 Video Call</div>
+        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>Unit {job.unit_number}</div>
+      </div>
+
+      {connecting && (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: 'white' }}>
+          <div style={{ fontSize: '40px', marginBottom: '16px' }}>📡</div>
+          <div style={{ fontSize: '16px', fontWeight: '600' }}>Connecting...</div>
+          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginTop: '6px' }}>{roomName}</div>
+        </div>
+      )}
+
+      {error && (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: 'white', padding: '24px', textAlign: 'center' }}>
+          <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
+          <div style={{ fontSize: '16px', fontWeight: '600', color: '#ef4444' }}>{error}</div>
+          <button onClick={onBack} style={{ marginTop: '20px', backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>Go Back</button>
+        </div>
+      )}
+
+      {!connecting && !error && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', gap: '12px' }}>
+          <div ref={remoteVideoRef} style={{ flex: 1, backgroundColor: '#1a1a2e', borderRadius: '16px', overflow: 'hidden', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>Waiting for CS team...</div>
+          </div>
+          <div ref={localVideoRef} style={{ width: '120px', height: '90px', backgroundColor: '#1B3A6B', borderRadius: '10px', overflow: 'hidden', alignSelf: 'flex-end', border: '2px solid #14B8A6' }} />
+        </div>
+      )}
+
+      <div style={{ backgroundColor: '#1B3A6B', padding: '20px 16px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
+        <button onClick={toggleMute} style={{ width: '56px', height: '56px', borderRadius: '50%', border: 'none', cursor: 'pointer', backgroundColor: muted ? '#ef4444' : 'rgba(255,255,255,0.15)', color: 'white', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {muted ? '🔇' : '🎤'}
+        </button>
+        <button onClick={handleHangUp} style={{ width: '64px', height: '64px', borderRadius: '50%', border: 'none', cursor: 'pointer', backgroundColor: '#ef4444', color: 'white', fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(239,68,68,0.4)' }}>
+          📵
+        </button>
+        <button onClick={toggleVideo} style={{ width: '56px', height: '56px', borderRadius: '50%', border: 'none', cursor: 'pointer', backgroundColor: videoOff ? '#ef4444' : 'rgba(255,255,255,0.15)', color: 'white', fontSize: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {videoOff ? '🚫' : '📷'}
+        </button>
+      </div>
+    </div>
+  );
+}
 export default function App() {
   const [tech, setTech] = useState(() => { const s = localStorage.getItem('techUser'); return s ? JSON.parse(s) : null; });
   const [token, setToken] = useState(() => localStorage.getItem('techToken') || '');
@@ -1459,6 +1579,8 @@ export default function App() {
   const [checkInData, setCheckInData] = useState(null);
   const [diagData, setDiagData] = useState(null);
   const [gate1Data, setGate1Data] = useState(null);
+  const [videoToken, setVideoToken] = useState(null);
+const [videoRoom, setVideoRoom] = useState(null);
   const [lang, setLang] = useState(() => localStorage.getItem('techLang') || 'en');
 
   const handleLangChange = (l) => { setLang(l); localStorage.setItem('techLang', l); };
@@ -1518,6 +1640,20 @@ export default function App() {
     setDiagData(null);
     setGate1Data(null);
   };
+  const handleVideoCall = async (job) => {
+  try {
+    const res = await axios.post(`${API}/video/token`, {
+      serviceRequestId: job.id,
+      techId: tech.id,
+      techName: `${tech.first_name} ${tech.last_name}`,
+    }, { headers: { Authorization: `Bearer ${token}` } });
+    setVideoToken(res.data.token);
+    setVideoRoom(res.data.roomName);
+    setScreen('video');
+  } catch (err) {
+    alert('Failed to start video call. Please try again.');
+  }
+};
 
   const t = STRINGS[lang];
 
@@ -1548,11 +1684,12 @@ export default function App() {
         </div>
       )}
       {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} />}
-      {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={() => setScreen('checkin')} lang={lang} />}
+      {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={() => setScreen('checkin')} onVideoCall={handleVideoCall} lang={lang} />}
       {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} />}
       {screen === 'diagnosis' && selectedJob && <DiagnosisScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} onComplete={handleDiagnosisComplete} onBack={() => setScreen('checkin')} lang={lang} />}
       {screen === 'gate1' && selectedJob && <Gate1Screen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} onComplete={handleGate1Complete} onBack={() => setScreen('diagnosis')} lang={lang} ppeConfirmed={checkInData?.ppeConfirmed} />}
       {screen === 'submitted' && selectedJob && <SubmittedScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} gate1Data={gate1Data} onNext={handleSubmittedNext} lang={lang} />}
+      {screen === 'video' && selectedJob && videoToken && <VideoCallScreen job={selectedJob} token={videoToken} roomName={videoRoom} onBack={() => setScreen('detail')} lang={lang} />}
     </div>
   );
 }
