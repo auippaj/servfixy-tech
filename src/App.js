@@ -468,6 +468,12 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
         await axios.patch(`${API}/touchpoints/${job.id}/3`, { fired_by: tech.email, notes: `RVC: ${rvcCode}` }, { headers: { Authorization: `Bearer ${token}` } });
       } catch { }
     }
+    // Flip tech_checked_in flag so resident video button activates
+    try {
+      await axios.patch(`${API}/service-requests/${job.id}/tech-checkin`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    } catch (err) {
+      console.warn('Check-in flag failed silently:', err.message);
+    }
     onComplete({ rvc: rvcCode, photos, coords: gpsCoords, rvcMethod, ppeConfirmed, hvacLow, hvacHigh, refrigerantType, expansionValve, suctionTemp, liquidTemp });
   };
 
