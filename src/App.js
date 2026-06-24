@@ -1416,10 +1416,53 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
           {speaking ? '⏹' : '🔊'}
         </button>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <span style={{ fontWeight: '700', color: '#1B3A6B' }}>#{job.id.slice(0, 8)}</span>
+          <span style={{ fontWeight: '700', color: '#1B3A6B' }}>
+            {(() => { const scheduled = ['assigned','in_progress','submitted','completed']; const prefix = scheduled.includes(job.status) ? 'SO' : 'SR'; const num = job.ticket_number ? String(job.ticket_number).padStart(4,'0') : '????'; return `${prefix}-${num}`; })()}
+          </span>
           <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '700' }}>{tLabel}</span>
         </div>
         <p style={{ margin: '0 0 16px', color: '#374151' }}>{job.description}</p>
+
+        {/* Packaged Service Order */}
+        {(job.triage_assessment || job.description || (job.photo_urls && job.photo_urls.length > 0) || job.location_room) && (
+          <div style={{ backgroundColor: '#f0f4ff', borderRadius: '10px', padding: '14px', marginBottom: '16px', border: '1px solid #c7d7f5' }}>
+            <div style={{ fontSize: '11px', fontWeight: '800', color: '#1B3A6B', letterSpacing: '1px', marginBottom: '12px', textTransform: 'uppercase' }}>
+              📋 {lang === 'es' ? 'Paquete de Servicio' : 'Service Brief'}
+            </div>
+
+            {job.description && (
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', marginBottom: '4px', textTransform: 'uppercase' }}>{lang === 'es' ? 'Reporte del Residente' : 'Resident Report'}</div>
+                <div style={{ fontSize: '13px', color: '#374151', lineHeight: '1.5' }}>{job.description}</div>
+              </div>
+            )}
+
+            {job.triage_assessment && (
+              <div style={{ marginBottom: '10px', backgroundColor: 'white', borderRadius: '8px', padding: '10px 12px', borderLeft: '3px solid #1B3A6B' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', marginBottom: '4px', textTransform: 'uppercase' }}>🤖 {lang === 'es' ? 'Evaluacion IA' : 'AI Assessment'}</div>
+                <div style={{ fontSize: '13px', color: '#374151', lineHeight: '1.5' }}>{job.triage_assessment}</div>
+              </div>
+            )}
+
+            {job.location_room && (
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', marginBottom: '4px', textTransform: 'uppercase' }}>📍 {lang === 'es' ? 'Ubicacion' : 'Location'}</div>
+                <div style={{ fontSize: '13px', color: '#1B3A6B', fontWeight: '600' }}>{job.location_room}{job.location_spot ? ` — ${job.location_spot}` : ''}</div>
+              </div>
+            )}
+
+            {job.photo_urls && job.photo_urls.length > 0 && (
+              <div>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', marginBottom: '8px', textTransform: 'uppercase' }}>📷 {lang === 'es' ? 'Fotos del Residente' : 'Resident Photos'} ({job.photo_urls.length})</div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {job.photo_urls.map((url, i) => (
+                    <img key={i} src={url} alt={`photo-${i}`} style={{ width: '80px', height: '60px', objectFit: 'cover', borderRadius: '6px', border: '2px solid #c7d7f5' }} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         <div style={{ backgroundColor: '#f9fafb', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
           <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{t.location}</div>
           <div style={{ fontWeight: '600' }}>{t.unit} {job.unit_number || ''}</div>
