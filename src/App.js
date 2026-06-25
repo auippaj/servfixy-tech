@@ -1485,7 +1485,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
           <div style={{ color: 'white', fontWeight: '700', fontSize: '15px', marginBottom: '4px' }}>{t.readyToStart}</div>
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', marginBottom: '16px' }}>{t.checkInRequired}</div>
           <button style={{ backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%' }} onClick={onCheckIn}>{t.beginCheckIn}</button>
-          {job.status === 'in_progress' && <button style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginTop: '10px' }} onClick={() => onVideoCall(job)}>📹 Start Video Call</button>}
+          {job.status === 'in_progress' && job.tech_checked_in && <button style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginTop: '10px' }} onClick={() => onVideoCall(job)}>📹 Start Video Call</button>}
         </div>
       )}
       <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
@@ -1621,6 +1621,165 @@ function VideoCallScreen({ job, token, roomName, onBack, lang }) {
     </div>
   );
 }
+function AdminDashboard({ tech, token, onLogout, lang, setLang }) {
+  const [techs, setTechs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTech, setSelectedTech] = useState(null);
+  const [techJobs, setTechJobs] = useState([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+
+  useEffect(() => {
+    axios.get(`${API}/technicians`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        const filtered = (res.data || []).filter(t => t.email !== 'james@servfixy.com');
+        setTechs(filtered);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const handleSelectTech = (t) => {
+    setSelectedTech(t);
+    setJobsLoading(true);
+    axios.get(`${API}/technicians/${t.id}/jobs`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setTechJobs(res.data || []))
+      .catch(() => setTechJobs([]))
+      .finally(() => setJobsLoading(false));
+  };
+
+  const tierColor = { T1: '#ef4444', T2: '#f97316', T3: '#3b82f6', T4: '#a855f7' };
+  const statusColor = { pending: '#6b7280', assigned: '#3b82f6', in_progress: '#f97316', completed: '#22c55e', scheduled: '#14B8A6' };
+
+  const getTier = (job) => {
+    if (job.priority === 'urgent') return 'T1';
+    if (job.priority === 'high') return 'T2';
+    if (job.priority === 'medium') return 'T3';
+    return 'T4';
+  };
+
+  const getInitials = (t) => `${t.first_name?.[0] || ''}${t.last_name?.[0] || ''}`;
+
+  const getSatColor = (avg) => {
+    if (!avg || avg === 0) return '#6b7280';
+    if (avg >= 4) return '#22c55e';
+    if (avg >= 3) return '#f97316';
+    return '#ef4444';
+  };
+
+  if (selectedTech) return (
+    <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: '430px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+      <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px' }}>
+        <button onClick={() => { setSelectedTech(null); setTechJobs([]); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '12px' }}>← Back to Team</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '48px', height: '48px', backgroundColor: '#14B8A6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '16px' }}>
+            {getInitials(selectedTech)}
+          </div>
+          <div>
+            <div style={{ fontSize: '18px', fontWeight: '700' }}>{selectedTech.first_name} {selectedTech.last_name}</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>{selectedTech.email}</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', marginTop: '14px' }}>
+          {[
+            ['Active Jobs', selectedTech.current_job_count || 0],
+            ['Sat. Avg', selectedTech.satisfaction_avg > 0 ? `${Number(selectedTech.satisfaction_avg).toFixed(1)}★` : '—'],
+            ['Reviews', selectedTech.satisfaction_count || 0],
+          ].map(([label, val]) => (
+            <div key={label} style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+              <div style={{ fontSize: '18px', fontWeight: '800', color: '#14B8A6' }}>{val}</div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>{label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: '16px' }}>
+        <div style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280', marginBottom: '12px' }}>
+          {jobsLoading ? 'Loading jobs...' : `${techJobs.length} active job${techJobs.length !== 1 ? 's' : ''}`}
+        </div>
+        {!jobsLoading && techJobs.length === 0 && (
+          <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '32px', textAlign: 'center', color: '#6b7280', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
+            No active jobs
+          </div>
+        )}
+        {techJobs.map(job => {
+          const tier = getTier(job);
+          return (
+            <div key={job.id} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', marginBottom: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', borderLeft: `4px solid ${tierColor[tier]}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                <span style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '13px' }}>
+                  {(() => { const scheduled = ['assigned','in_progress','submitted','completed']; const prefix = scheduled.includes(job.status) ? 'SO' : 'SR'; const num = job.ticket_number ? String(job.ticket_number).padStart(4,'0') : '????'; return `${prefix}-${num}`; })()}
+                </span>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: '700' }}>{tier}</span>
+                  <span style={{ backgroundColor: statusColor[job.status] || '#6b7280', color: 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: '600' }}>{job.status?.replace('_', ' ')}</span>
+                </div>
+              </div>
+              <div style={{ fontSize: '13px', color: '#374151', marginBottom: '4px' }}>{job.description}</div>
+              <div style={{ fontSize: '12px', color: '#6b7280' }}>Unit {job.unit_number} · {job.property_name}</div>
+              <SLATimer createdAt={job.created_at} slaHours={tier === 'T1' ? 2 : tier === 'T2' ? 24 : 72} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: '430px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+      <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ fontSize: '18px', fontWeight: '700' }}>👑 Admin View</div>
+          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>Team overview — {techs.length} technicians</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <LangToggle lang={lang} setLang={setLang} />
+          <button style={{ background: 'none', border: '1px solid rgba(255,255,255,0.4)', color: 'white', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }} onClick={onLogout}>Log Out</button>
+        </div>
+      </div>
+
+      <div style={{ padding: '16px' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', color: '#6b7280', padding: '40px' }}>Loading team...</div>
+        ) : (
+          techs.map(t => (
+            <div key={t.id} onClick={() => handleSelectTech(t)}
+              style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', marginBottom: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', border: '1px solid #f0f0f0' }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = '#14B8A6'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = '#f0f0f0'}>
+              <div style={{ width: '48px', height: '48px', backgroundColor: '#0F2A52', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '16px', color: '#14B8A6', flexShrink: 0 }}>
+                {getInitials(t)}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '15px' }}>{t.first_name} {t.last_name}</div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>{t.email}</div>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '16px', fontWeight: '800', color: t.current_job_count > 3 ? '#f97316' : '#1B3A6B' }}>{t.current_job_count || 0}</div>
+                    <div style={{ fontSize: '10px', color: '#9ca3af' }}>Active</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '16px', fontWeight: '800', color: getSatColor(t.satisfaction_avg) }}>
+                      {t.satisfaction_avg > 0 ? `${Number(t.satisfaction_avg).toFixed(1)}★` : '—'}
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#9ca3af' }}>Sat.</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '16px', fontWeight: '800', color: '#1B3A6B' }}>{t.satisfaction_count || 0}</div>
+                    <div style={{ fontSize: '10px', color: '#9ca3af' }}>Reviews</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ color: '#14B8A6', fontSize: '18px' }}>›</div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [tech, setTech] = useState(() => { const s = localStorage.getItem('techUser'); return s ? JSON.parse(s) : null; });
   const [token, setToken] = useState(() => localStorage.getItem('techToken') || '');
@@ -1630,7 +1789,7 @@ export default function App() {
   const [diagData, setDiagData] = useState(null);
   const [gate1Data, setGate1Data] = useState(null);
   const [videoToken, setVideoToken] = useState(null);
-const [videoRoom, setVideoRoom] = useState(null);
+  const [videoRoom, setVideoRoom] = useState(null);
   const [lang, setLang] = useState(() => localStorage.getItem('techLang') || 'en');
 
   const handleLangChange = (l) => { setLang(l); localStorage.setItem('techLang', l); };
@@ -1708,6 +1867,7 @@ const [videoRoom, setVideoRoom] = useState(null);
   const t = STRINGS[lang];
 
   if (!tech) return <LoginScreen onLogin={handleLogin} lang={lang} setLang={handleLangChange} />;
+  if (tech.email === 'james@servfixy.com') return <AdminDashboard tech={tech} token={token} onLogout={handleLogout} lang={lang} setLang={handleLangChange} />;
 
   const getTitle = () => {
     if (screen === 'checkin') return t.checkIn;
