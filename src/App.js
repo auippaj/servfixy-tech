@@ -472,7 +472,8 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
     try {
       await axios.patch(`${API}/service-requests/${job.id}/tech-checkin`, {}, { headers: { Authorization: `Bearer ${token}` } });
     } catch (err) {
-      console.warn('Check-in flag failed silently:', err.message);
+      console.error('Check-in flag error:', err.message, err.response?.data);
+      alert('Check-in flag error: ' + err.message);
     }
     onComplete({ rvc: rvcCode, photos, coords: gpsCoords, rvcMethod, ppeConfirmed, hvacLow, hvacHigh, refrigerantType, expansionValve, suctionTemp, liquidTemp });
   };
