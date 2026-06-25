@@ -1796,7 +1796,7 @@ export default function App() {
   const handleLogin = (techData) => { setTech(techData); setToken(localStorage.getItem('techToken')); };
   const handleLogout = () => { localStorage.clear(); setTech(null); setToken(''); setScreen('list'); };
   const handleStatusUpdate = () => {};
-  const handleCheckInComplete = (data) => { setCheckInData(data); setScreen('diagnosis'); };
+  const handleCheckInComplete = (data) => { setCheckInData(data); setSelectedJob(prev => ({ ...prev, tech_checked_in: true, status: 'in_progress' })); setScreen('diagnosis'); };
   const handleDiagnosisComplete = (data) => { setDiagData(data); setScreen('gate1'); };
   const handleGate1Complete = async (data) => {
     setGate1Data(data);
