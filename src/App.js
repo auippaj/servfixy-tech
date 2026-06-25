@@ -383,7 +383,7 @@ function JobList({ tech, token, onSelectJob, lang }) {
               <span style={{ backgroundColor: statusColor[job.status] || '#6b7280', color: 'white', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
                 {lang === 'es' ? ({ in_progress: 'En progreso', pending: 'Pendiente', assigned: 'Asignado', completed: 'Completado' }[job.status] || job.status) : job.status?.replace('_', ' ')}
               </span>
-              {job.status === 'assigned' && (
+              {(job.status === 'assigned' || job.status === 'scheduled') && (
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }} onClick={e => handleAccept(e, job.id)} disabled={actionLoading === job.id + '_accept'}>
                     {actionLoading === job.id + '_accept' ? '...' : t.accept}
@@ -1480,7 +1480,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
           {lang === 'es' ? ({ in_progress: 'En progreso', pending: 'Pendiente', assigned: 'Asignado', completed: 'Completado' }[job.status] || job.status) : job.status?.replace('_', ' ')}
         </span>
       </div>
-      {(job.status === 'in_progress' || job.status === 'assigned') && (
+      {(job.status === 'in_progress' || job.status === 'assigned' || job.status === 'scheduled') && (
         <div style={{ backgroundColor: '#1B3A6B', borderRadius: '10px', padding: '20px', margin: '0 12px 12px', boxShadow: '0 2px 8px rgba(27,58,107,0.25)' }}>
           <div style={{ color: 'white', fontWeight: '700', fontSize: '15px', marginBottom: '4px' }}>{t.readyToStart}</div>
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', marginBottom: '16px' }}>{t.checkInRequired}</div>
@@ -1492,7 +1492,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
         <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>{t.addNote}</div>
         <textarea style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', marginBottom: '16px', height: '80px', resize: 'none' }} placeholder={t.notesPlaceholder} value={note} onChange={e => setNote(e.target.value)} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {job.status === 'assigned' && (
+          {(job.status === 'assigned' || job.status === 'scheduled') && (
             <button style={{ backgroundColor: '#f97316', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }} onClick={() => updateStatus('in_progress')} disabled={loading}>{t.markEnRoute}</button>
           )}
           {job.status === 'completed' && <div style={{ textAlign: 'center', color: '#22c55e', fontWeight: '600' }}>{t.jobComplete}</div>}
