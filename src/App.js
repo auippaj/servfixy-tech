@@ -763,7 +763,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
   );
 }
 
-function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, lang, onVideoCall }) {
+function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, lang, onVideoCall, checkedIn }) {
   const t = STRINGS[lang];
   const [mode, setMode] = useState('completed');
   const [system, setSystem] = useState('');
@@ -849,7 +849,7 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
       <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '8px' }}>{t.back}</button>
         <div style={{ fontSize: '16px', fontWeight: '700' }}>{lang === 'es' ? 'Diagnostico y Cierre' : 'Diagnosis & Completion'} - {t.unit} {job.unit_number || ''}</div>
-        {job.tech_checked_in && <button onClick={() => onVideoCall(job)} style={{ marginTop: '8px', backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', width: '100%' }}>📹 Start Video Call</button>}
+        {checkedIn && <button onClick={() => onVideoCall(job)} style={{ marginTop: '8px', backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', width: '100%' }}>📹 Start Video Call</button>}
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>{job.property_name}</div>
       </div>
       <div style={{ backgroundColor: '#0f1f3d', color: 'white', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1897,7 +1897,7 @@ export default function App() {
       {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} />}
       {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={() => setScreen('checkin')} onVideoCall={handleVideoCall} lang={lang} />}
       {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} />}
-      {screen === 'diagnosis' && selectedJob && <DiagnosisScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} onComplete={handleDiagnosisComplete} onBack={() => setScreen('checkin')} lang={lang} onVideoCall={handleVideoCall} />}
+      {screen === 'diagnosis' && selectedJob && <DiagnosisScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} onComplete={handleDiagnosisComplete} onBack={() => setScreen('checkin')} lang={lang} onVideoCall={handleVideoCall} checkedIn={selectedJob.tech_checked_in} />}
       {screen === 'gate1' && selectedJob && <Gate1Screen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} onComplete={handleGate1Complete} onBack={() => setScreen('diagnosis')} lang={lang} ppeConfirmed={checkInData?.ppeConfirmed} />}
       {screen === 'submitted' && selectedJob && <SubmittedScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} gate1Data={gate1Data} onNext={handleSubmittedNext} lang={lang} />}
       {screen === 'video' && selectedJob && videoToken && <VideoCallScreen job={selectedJob} token={videoToken} roomName={videoRoom} onBack={() => setScreen('detail')} lang={lang} />}
