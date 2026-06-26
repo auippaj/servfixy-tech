@@ -1803,18 +1803,22 @@ export default function App() {
     setGate1Data(data);
     try {
       if (data.afterPhotos && data.afterPhotos.length > 0) {
-        const formData = new FormData();
-        for (const photo of data.afterPhotos) {
-          const base64 = photo.url.split(',')[1];
-          const binary = atob(base64);
-          const arr = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
-          const blob = new Blob([arr], { type: 'image/jpeg' });
-          formData.append('photos', blob, `after-${Date.now()}.jpg`);
+        try {
+          const formData = new FormData();
+          for (const photo of data.afterPhotos) {
+            const base64 = photo.url.split(',')[1];
+            const binary = atob(base64);
+            const arr = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+            const blob = new Blob([arr], { type: 'image/jpeg' });
+            formData.append('photos', blob, `after-${Date.now()}.jpg`);
+          }
+          await axios.post(`${API}/service-requests/${selectedJob.id}/photos`, formData, {
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+          });
+        } catch (photoErr) {
+          console.warn('After photos upload failed silently:', photoErr.message);
         }
-        await axios.post(`${API}/service-requests/${selectedJob.id}/photos`, formData, {
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
-        });
       }
       await axios.post(`${API}/service-requests/${selectedJob.id}/gate1`, {
         tech_id: tech.id,
