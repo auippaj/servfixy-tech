@@ -421,7 +421,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
   const [rvcMethod, setRvcMethod] = useState('');
   const [ppeConfirmed, setPpeConfirmed] = useState(false);
   const [unitConfirm, setUnitConfirm] = useState('');
-  const [gpsFailCount, setGpsFailCount] = useState(0);
+  const [, setGpsFailCount] = useState(0);
   const [hvacLow, setHvacLow] = useState('');
   const [hvacHigh, setHvacHigh] = useState('');
   const [refrigerantType, setRefrigerantType] = useState('');
