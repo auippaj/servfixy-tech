@@ -420,6 +420,8 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
   const [showRvcPicker, setShowRvcPicker] = useState(false);
   const [rvcMethod, setRvcMethod] = useState('');
   const [ppeConfirmed, setPpeConfirmed] = useState(false);
+  const [unitConfirm, setUnitConfirm] = useState('');
+  const [gpsFailCount, setGpsFailCount] = useState(0);
   const [hvacLow, setHvacLow] = useState('');
   const [hvacHigh, setHvacHigh] = useState('');
   const [refrigerantType, setRefrigerantType] = useState('');
@@ -438,18 +440,38 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
     setGpsStatus('checking');
     setTimeout(() => {
       navigator.geolocation.getCurrentPosition(
-  (position) => {
-    setGpsCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
-  },
-  (err) => {
-    console.error('GPS error:', err);
-    setGpsCoords(null);
-  },
-  { enableHighAccuracy: true, timeout: 10000 }
-);
-      setGpsStatus('confirmed');
-      setTimeout(() => setStep('rvc'), 1500);
+        (position) => {
+          setGpsCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
+          setGpsStatus('confirmed');
+          setTimeout(() => setStep('rvc'), 1500);
+        },
+        (err) => {
+          console.error('GPS error:', err);
+          setGpsCoords(null);
+          setGpsFailCount(prev => {
+            const next = prev + 1;
+            if (next >= 2) {
+              setGpsStatus('manual');
+            } else {
+              setGpsStatus('denied');
+            }
+            return next;
+          });
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
     }, 1200);
+  };
+
+  useEffect(() => {
+    requestGPS();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleManualConfirm = () => {
+    if (!unitConfirm.trim()) return;
+    setGpsCoords({ manual: true, unit_entered: unitConfirm.trim() });
+    setStep('rvc');
   };
 
   const handlePhotoCapture = (e) => {
@@ -509,8 +531,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
             <div style={{ fontSize: '56px', marginBottom: '16px' }}>📍</div>
             <div style={{ fontSize: '18px', fontWeight: '700', color: '#1B3A6B', marginBottom: '8px' }}>{t.confirmArrival}</div>
             <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px', lineHeight: '1.5', whiteSpace: 'pre-line' }}>{t.gpsInstruction}</div>
-            {gpsStatus === 'idle' && <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%' }} onClick={requestGPS}>{t.confirmGPS}</button>}
-            {gpsStatus === 'checking' && <div style={{ color: '#6b7280', fontSize: '14px', padding: '14px' }}><div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>{t.gettingLocation}</div>}
+            {(gpsStatus === 'idle' || gpsStatus === 'checking') && <div style={{ color: '#6b7280', fontSize: '14px', padding: '14px' }}><div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>{t.gettingLocation}</div>}
             {gpsStatus === 'confirmed' && (
               <div style={{ backgroundColor: '#f0fdf4', borderRadius: '12px', padding: '20px', border: '2px solid #22c55e' }}>
                 <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
@@ -527,6 +548,29 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
                   <div style={{ color: '#6b7280', fontSize: '12px', marginTop: '4px' }}>{t.locationDeniedMsg}</div>
                 </div>
                 <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', width: '100%' }} onClick={requestGPS}>{t.tryAgain}</button>
+              </div>
+            )}
+            {gpsStatus === 'manual' && (
+              <div>
+                <div style={{ backgroundColor: '#fef9ec', borderRadius: '12px', padding: '16px', border: '2px solid #fbbf24', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '4px' }}>📝</div>
+                  <div style={{ color: '#92400e', fontWeight: '600', fontSize: '14px' }}>{lang === 'es' ? 'Ubicacion no disponible' : 'Location unavailable'}</div>
+                  <div style={{ color: '#6b7280', fontSize: '12px', marginTop: '4px' }}>{lang === 'es' ? 'Confirma manualmente ingresando el numero de unidad' : 'Confirm manually by entering the unit number'}</div>
+                </div>
+                <input
+                  type="text"
+                  value={unitConfirm}
+                  onChange={e => setUnitConfirm(e.target.value)}
+                  placeholder={lang === 'es' ? 'Numero de unidad' : 'Unit number'}
+                  style={{ width: '100%', padding: '14px', border: '2px solid #1B3A6B', borderRadius: '10px', fontSize: '16px', fontWeight: '600', textAlign: 'center', boxSizing: 'border-box', marginBottom: '12px', color: '#1B3A6B' }}
+                />
+                <button
+                  style={{ backgroundColor: unitConfirm.trim() ? '#1B3A6B' : '#d1d5db', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: unitConfirm.trim() ? 'pointer' : 'not-allowed', width: '100%' }}
+                  disabled={!unitConfirm.trim()}
+                  onClick={handleManualConfirm}
+                >
+                  {lang === 'es' ? 'Confirmar y continuar →' : 'Confirm and Continue →'}
+                </button>
               </div>
             )}
           </div>
