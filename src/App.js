@@ -1189,24 +1189,42 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
     5: !!checkInData?.rvc,
   };
 
-  // Lazily initialize `checked` the first time this screen renders for a job.
-  if (state.checked === null) {
-    setState({ checked: checklistItems.map((_, i) => autoChecked[i] || false) });
-    return null; // re-renders immediately with checked set
-  }
-  const checked = state.checked;
+  // All hooks must run unconditionally, in the same order, on every render
+  // — including the very first render before `state.checked` has been
+  // initialized. So every useState/useRef/useEffect lives here, above any
+  // early return, even though some of their values aren't used until
+  // `checked` is set a moment later.
   const { afterPhotos, sigMode, signed, gpsOut, contactMethod } = state;
-
   const afterPhotoRef = useRef(null);
+  const [gpsOutLoading, setGpsOutLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  // Lazily initialize `checked` the first time this screen renders for a job.
+  // (Effect, not a render-time setState-and-return, so hook order never changes.)
+  useEffect(() => {
+    if (state.checked === null) {
+      setState({ checked: checklistItems.map((_, i) => autoChecked[i] || false) });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.checked === null]);
 
   // Keep auto-checked items in sync as their underlying data changes
   // (e.g. after photos uploaded after this screen already mounted).
   useEffect(() => {
+    if (state.checked === null) return;
     setState({
-      checked: checklistItems.map((_, i) => (i in autoChecked) ? autoChecked[i] : checked[i]),
+      checked: checklistItems.map((_, i) => (i in autoChecked) ? autoChecked[i] : state.checked[i]),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkInData?.photos?.length, afterPhotos?.length, diagData?.system, diagData?.category, diagData?.cause, diagData?.diagnosis, checkInData?.rvc]);
+
+  // Until `checked` has been initialized (one tick after first mount),
+  // render nothing. This is a plain conditional return AFTER all hooks
+  // above have already run, so it's safe.
+  if (state.checked === null) {
+    return null;
+  }
+  const checked = state.checked;
 
   const toggleCheck = (i) => {
     if (i in autoChecked) return; // auto items aren't manually toggleable
@@ -1228,9 +1246,6 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
   const totalChecked = checked.filter(Boolean).length;
   const allChecked = totalChecked >= requiredCount;
   const progress = totalChecked / requiredCount;
-
-  const [gpsOutLoading, setGpsOutLoading] = useState(false);
-  const [submitError, setSubmitError] = useState('');
 
   // Combined action: fire GPS check-out (if not already captured), then submit.
   const handleSubmitClick = () => {
