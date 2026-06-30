@@ -637,7 +637,30 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
         const shStatus = getStatus(superheat, 'superheat');
         const scStatus = getStatus(subcool, 'subcool');
         const statusStyle = (s) => s === 'green' ? { bg: '#f0fdf4', border: '#22c55e', text: '#15803d', icon: '🟢' } : s === 'yellow' ? { bg: '#fefce8', border: '#fbbf24', text: '#92400e', icon: '🟡' } : { bg: '#fef2f2', border: '#ef4444', text: '#dc2626', icon: '🔴' };
-        const canContinue = refrigerantType && hvacLow && hvacHigh && suctionTemp && liquidTemp;
+        const [hvacAnalysis, setHvacAnalysis] = useState(null);
+const [hvacAnalysisLoading, setHvacAnalysisLoading] = useState(false);
+const canContinue = refrigerantType && hvacLow && hvacHigh && suctionTemp && liquidTemp;
+
+const handleHvacAnalysis = async () => {
+  setHvacAnalysisLoading(true);
+  try {
+    const res = await axios.post(`${API}/service-requests/${job.id}/hvac-analysis`, {
+      hvac_low_side_psi: hvacLow,
+      hvac_high_side_psi: hvacHigh,
+      refrigerant_type: refrigerantType,
+      expansion_valve_type: expansionValve,
+      suction_line_temp: suctionTemp,
+      liquid_line_temp: liquidTemp,
+      superheat_result: superheat !== null ? superheat.toFixed(1) : null,
+      subcool_result: subcool !== null ? subcool.toFixed(1) : null,
+      triage_assessment: job.triage_assessment || null,
+    }, { headers: { Authorization: `Bearer ${token}` } });
+    setHvacAnalysis(res.data);
+  } catch (err) {
+    setHvacAnalysis({ likely_issue: 'Analysis unavailable', confidence: 'Low', next_step: 'Proceed with manual diagnosis' });
+  }
+  setHvacAnalysisLoading(false);
+};
         return (
           <div style={{ padding: '16px' }}>
             <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '12px' }}>
@@ -715,9 +738,36 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
                 )}
               </div>
             </div>
-            <button style={{ backgroundColor: canContinue ? '#1B3A6B' : '#d1d5db', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: canContinue ? 'pointer' : 'not-allowed', width: '100%', marginBottom: '10px' }} disabled={!canContinue} onClick={() => setStep('photos')}>
-              {canContinue ? (lang === 'es' ? 'Continuar a fotos →' : 'Continue to Photos →') : (lang === 'es' ? 'Completa todas las lecturas' : 'Complete all readings')}
-            </button>
+            {canContinue && !hvacAnalysis && (
+              <button style={{ backgroundColor: hvacAnalysisLoading ? '#6b7280' : '#14B8A6', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: hvacAnalysisLoading ? 'not-allowed' : 'pointer', width: '100%', marginBottom: '10px' }} disabled={hvacAnalysisLoading} onClick={handleHvacAnalysis}>
+                {hvacAnalysisLoading ? '🤖 Analyzing readings...' : '🤖 Get AI Analysis →'}
+              </button>
+            )}
+            {hvacAnalysis && (
+              <div style={{ backgroundColor: '#0f1f3d', borderRadius: '12px', padding: '16px', marginBottom: '10px', border: '2px solid #14B8A6' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', color: '#14B8A6', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>🤖 AI Finding</div>
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Likely Issue</div>
+                  <div style={{ fontSize: '14px', color: 'white', fontWeight: '600', lineHeight: '1.4' }}>{hvacAnalysis.likely_issue}</div>
+                </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Confidence</div>
+                  <span style={{ backgroundColor: hvacAnalysis.confidence === 'High' ? '#22c55e' : hvacAnalysis.confidence === 'Medium' ? '#f97316' : '#6b7280', color: 'white', padding: '3px 10px', borderRadius: '10px', fontSize: '12px', fontWeight: '700' }}>{hvacAnalysis.confidence}</span>
+                </div>
+                <div style={{ backgroundColor: 'rgba(20,184,166,0.15)', borderRadius: '8px', padding: '10px 12px', borderLeft: '3px solid #14B8A6' }}>
+                  <div style={{ fontSize: '11px', color: '#14B8A6', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700' }}>Next Step</div>
+                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', lineHeight: '1.4' }}>{hvacAnalysis.next_step}</div>
+                </div>
+                <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginTop: '14px' }} onClick={() => setStep('photos')}>
+                  Continue to Photos →
+                </button>
+              </div>
+            )}
+            {!canContinue && (
+              <button style={{ backgroundColor: '#d1d5db', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'not-allowed', width: '100%', marginBottom: '10px' }} disabled>
+                {lang === 'es' ? 'Completa todas las lecturas' : 'Complete all readings'}
+              </button>
+            )}
             <button style={{ backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', width: '100%' }} onClick={() => setStep('ppe')}>
               {lang === 'es' ? 'Volver' : 'Back'}
             </button>
