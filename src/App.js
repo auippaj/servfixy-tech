@@ -410,26 +410,17 @@ function generateRVC(jobId) {
   return `SERV${suffix}`;
 }
 
-function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
+// ── CheckInScreen ──
+// State is now lifted to App and passed in as `state` + `setState`.
+// `setState` merges partial updates, e.g. setState({ step: 'rvc' }).
+function CheckInScreen({ job, tech, token, onComplete, onBack, lang, state, setState }) {
   const t = STRINGS[lang];
-  const [step, setStep] = useState('gps');
-  const [gpsStatus, setGpsStatus] = useState('idle');
-  const [gpsCoords, setGpsCoords] = useState(null);
-  const [photos, setPhotos] = useState([]);
-  const [touch3Fired, setTouch3Fired] = useState(false);
-  const [showRvcPicker, setShowRvcPicker] = useState(false);
-  const [rvcMethod, setRvcMethod] = useState('');
-  const [ppeConfirmed, setPpeConfirmed] = useState(false);
-  const [unitConfirm, setUnitConfirm] = useState('');
-  const [, setGpsFailCount] = useState(0);
-  const [hvacLow, setHvacLow] = useState('');
-  const [hvacHigh, setHvacHigh] = useState('');
-  const [refrigerantType, setRefrigerantType] = useState('');
-  const [expansionValve, setExpansionValve] = useState('TXV');
-  const [suctionTemp, setSuctionTemp] = useState('');
-  const [liquidTemp, setLiquidTemp] = useState('');
-  const [hvacAnalysis, setHvacAnalysis] = useState(null);
-  const [hvacAnalysisLoading, setHvacAnalysisLoading] = useState(false);
+  const {
+    step, gpsStatus, gpsCoords, photos, touch3Fired, showRvcPicker, rvcMethod,
+    ppeConfirmed, unitConfirm, gpsFailCount, hvacLow, hvacHigh, refrigerantType,
+    expansionValve, suctionTemp, liquidTemp, hvacAnalysis, hvacAnalysisLoading,
+  } = state;
+
   const isHvac = job?.title?.toLowerCase().includes('hvac') || job?.description?.toLowerCase().includes('hvac') || job?.title?.toLowerCase().includes('ac ') || job?.title?.toLowerCase().includes('air') || job?.description?.toLowerCase().includes('cooling') || job?.description?.toLowerCase().includes('heating') || job?.category?.toLowerCase().includes('hvac') || (job?.title || '').toLowerCase().includes('hvac') || (job?.description || '').toLowerCase().includes('hvac') || (job?.description || '').toLowerCase().includes('ac ') || (job?.description || '').toLowerCase().includes('cold');
   const steps = isHvac ? [t.gpsStep, t.rvcStep, 'PPE', 'Gauges', t.photosStep] : [t.gpsStep, t.rvcStep, 'PPE', t.photosStep];
   const stepIndex = step === 'gps' ? 0 : step === 'rvc' ? 1 : step === 'ppe' ? 2 : step === 'hvac' ? 3 : (isHvac ? 4 : 3);
@@ -437,41 +428,37 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
   const rvcCode = generateRVC(job.id);
 
   const requestGPS = () => {
-    setGpsStatus('checking');
+    setState({ gpsStatus: 'checking' });
     setTimeout(() => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setGpsCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
-          setGpsStatus('confirmed');
-          setTimeout(() => setStep('rvc'), 1500);
+          setState({ gpsCoords: { lat: position.coords.latitude, lng: position.coords.longitude }, gpsStatus: 'confirmed' });
+          setTimeout(() => setState({ step: 'rvc' }), 1500);
         },
         (err) => {
           console.error('GPS error:', err);
-          setGpsCoords(null);
-          setGpsFailCount(prev => {
-            const next = prev + 1;
-            if (next >= 2) {
-              setGpsStatus('manual');
-            } else {
-              setGpsStatus('denied');
-            }
-            return next;
-          });
+          const next = (state.gpsFailCount || 0) + 1;
+          setState({ gpsCoords: null, gpsFailCount: next, gpsStatus: next >= 2 ? 'manual' : 'denied' });
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
     }, 1200);
   };
 
+  // Only auto-fire GPS once per job (when this is the very first time we're
+  // hitting the gps step with no status yet). Navigating back into this
+  // screen later (e.g. tapping "Back" from RVC/PPE) won't re-trigger it,
+  // since gpsStatus will already be 'confirmed' or 'manual' from before.
   useEffect(() => {
-    requestGPS();
+    if (step === 'gps' && gpsStatus === 'idle') {
+      requestGPS();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleManualConfirm = () => {
     if (!unitConfirm.trim()) return;
-    setGpsCoords({ manual: true, unit_entered: unitConfirm.trim() });
-    setStep('rvc');
+    setState({ gpsCoords: { manual: true, unit_entered: unitConfirm.trim() }, step: 'rvc' });
   };
 
   const handlePhotoCapture = (e) => {
@@ -479,7 +466,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        setPhotos(prev => [...prev, { url: ev.target.result, name: file.name, time: new Date().toLocaleTimeString() }]);
+        setState({ photos: [...state.photos, { url: ev.target.result, name: file.name, time: new Date().toLocaleTimeString() }] });
       };
       reader.readAsDataURL(file);
     });
@@ -487,7 +474,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
 
   const handleBeginWork = async () => {
     if (!touch3Fired) {
-      setTouch3Fired(true);
+      setState({ touch3Fired: true });
       try {
         await axios.patch(`${API}/touchpoints/${job.id}/3`, { fired_by: tech.email, notes: `RVC: ${rvcCode}` }, { headers: { Authorization: `Bearer ${token}` } });
       } catch { }
@@ -560,7 +547,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
                 <input
                   type="text"
                   value={unitConfirm}
-                  onChange={e => setUnitConfirm(e.target.value)}
+                  onChange={e => setState({ unitConfirm: e.target.value })}
                   placeholder={lang === 'es' ? 'Numero de unidad' : 'Unit number'}
                   style={{ width: '100%', padding: '14px', border: '2px solid #1B3A6B', borderRadius: '10px', fontSize: '16px', fontWeight: '600', textAlign: 'center', boxSizing: 'border-box', marginBottom: '12px', color: '#1B3A6B' }}
                 />
@@ -584,12 +571,12 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
             <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>{lang === 'es' ? 'Selecciona el metodo de confirmacion' : 'Select the confirmation method'}</div>
             {['In person - face to face', 'Resident showed notification on phone', 'Resident verbally confirmed code', 'Left door tag - no contact'].map(function(method) {
               return (
-                <button key={method} onClick={() => { setRvcMethod(method); setShowRvcPicker(false); setStep('ppe'); }} style={{ width: '100%', padding: '14px', marginBottom: '8px', backgroundColor: '#f0f4ff', color: '#1B3A6B', border: '1px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', textAlign: 'left' }}>
+                <button key={method} onClick={() => { setState({ rvcMethod: method, showRvcPicker: false, step: 'ppe' }); }} style={{ width: '100%', padding: '14px', marginBottom: '8px', backgroundColor: '#f0f4ff', color: '#1B3A6B', border: '1px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', textAlign: 'left' }}>
                   {method}
                 </button>
               );
             })}
-            <button onClick={() => setShowRvcPicker(false)} style={{ width: '100%', padding: '12px', backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}>{lang === 'es' ? 'Cancelar' : 'Cancel'}</button>
+            <button onClick={() => setState({ showRvcPicker: false })} style={{ width: '100%', padding: '12px', backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}>{lang === 'es' ? 'Cancelar' : 'Cancel'}</button>
           </div>
         </div>
       )}
@@ -608,7 +595,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
             <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>{t.touch3Logged} {new Date().toLocaleTimeString()}</div>
             <div style={{ fontSize: '13px', color: '#374151' }}>{t.unit} {job.unit_number || ''} - {job.property_name}</div>
           </div>
-          <button style={{ backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%' }} onClick={() => setShowRvcPicker(true)}>
+          <button style={{ backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%' }} onClick={() => setState({ showRvcPicker: true })}>
             {t.residentConfirmed}
           </button>
         </div>
@@ -629,10 +616,10 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
               );
             })}
           </div>
-          <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginBottom: '10px' }} onClick={() => { setPpeConfirmed(true); setStep(isHvac ? 'hvac' : 'photos'); }}>
+          <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginBottom: '10px' }} onClick={() => { setState({ ppeConfirmed: true, step: isHvac ? 'hvac' : 'photos' }); }}>
             {lang === 'es' ? 'Confirmo - Tengo mi EPP' : 'Confirmed - I have my PPE'}
           </button>
-          <button style={{ backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', width: '100%' }} onClick={() => setStep('rvc')}>
+          <button style={{ backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', width: '100%' }} onClick={() => setState({ step: 'rvc' })}>
             {lang === 'es' ? 'Volver' : 'Back'}
           </button>
         </div>
@@ -686,7 +673,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
         const canContinue = refrigerantType && hvacLow && hvacHigh && suctionTemp && liquidTemp;
 
 const handleHvacAnalysis = async () => {
-  setHvacAnalysisLoading(true);
+  setState({ hvacAnalysisLoading: true });
   try {
     const res = await axios.post(`${API}/service-requests/${job.id}/hvac-analysis`, {
       hvac_low_side_psi: hvacLow,
@@ -699,11 +686,10 @@ const handleHvacAnalysis = async () => {
       subcool_result: subcool !== null ? subcool.toFixed(1) : null,
       triage_assessment: job.triage_assessment || null,
     }, { headers: { Authorization: `Bearer ${token}` } });
-    setHvacAnalysis(res.data);
+    setState({ hvacAnalysis: res.data, hvacAnalysisLoading: false });
   } catch (err) {
-    setHvacAnalysis({ likely_issue: 'Analysis unavailable', confidence: 'Low', next_step: 'Proceed with manual diagnosis' });
+    setState({ hvacAnalysis: { likely_issue: 'Analysis unavailable', confidence: 'Low', next_step: 'Proceed with manual diagnosis' }, hvacAnalysisLoading: false });
   }
-  setHvacAnalysisLoading(false);
 };
         return (
           <div style={{ padding: '16px' }}>
@@ -713,7 +699,7 @@ const handleHvacAnalysis = async () => {
               <div style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', marginBottom: '20px' }}>{lang === 'es' ? 'Conecta manometros y registra lecturas' : 'Connect gauges and record all readings'}</div>
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de refrigerante' : 'Refrigerant Type'} <span style={{ color: '#ef4444' }}>*</span></label>
-                <select value={refrigerantType} onChange={e => setRefrigerantType(e.target.value)} style={{ width: '100%', padding: '12px', border: `2px solid ${refrigerantType ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '15px', fontWeight: '700', color: '#1B3A6B', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                <select value={refrigerantType} onChange={e => setState({ refrigerantType: e.target.value })} style={{ width: '100%', padding: '12px', border: `2px solid ${refrigerantType ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '15px', fontWeight: '700', color: '#1B3A6B', backgroundColor: 'white', boxSizing: 'border-box' }}>
                   <option value="">{lang === 'es' ? 'Seleccionar refrigerante...' : 'Select refrigerant...'}</option>
                   {['R-22', 'R-410A', 'R-32', 'R-454B', 'R-407C', 'R-134a'].map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
@@ -722,7 +708,7 @@ const handleHvacAnalysis = async () => {
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de valvula' : 'Expansion Valve'}</label>
                 <div style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e5e7eb' }}>
                   {['TXV', 'Fixed Orifice'].map(v => (
-                    <button key={v} onClick={() => setExpansionValve(v)} style={{ flex: 1, padding: '10px', border: 'none', cursor: 'pointer', backgroundColor: expansionValve === v ? '#1B3A6B' : '#f9fafb', color: expansionValve === v ? 'white' : '#6b7280', fontWeight: '700', fontSize: '13px' }}>
+                    <button key={v} onClick={() => setState({ expansionValve: v })} style={{ flex: 1, padding: '10px', border: 'none', cursor: 'pointer', backgroundColor: expansionValve === v ? '#1B3A6B' : '#f9fafb', color: expansionValve === v ? 'white' : '#6b7280', fontWeight: '700', fontSize: '13px' }}>
                       {v}
                     </button>
                   ))}
@@ -734,12 +720,12 @@ const handleHvacAnalysis = async () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{lang === 'es' ? 'Presion (PSI)' : 'Pressure (PSI)'}</label>
-                    <input type="number" value={hvacLow} onChange={e => setHvacLow(e.target.value)} placeholder="e.g. 70" style={{ width: '100%', padding: '12px', border: `2px solid ${hvacLow ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
+                    <input type="number" value={hvacLow} onChange={e => setState({ hvacLow: e.target.value })} placeholder="e.g. 70" style={{ width: '100%', padding: '12px', border: `2px solid ${hvacLow ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
                     {hvacLow && lowSatTemp !== null && <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', textAlign: 'center' }}>Sat. Temp: {lowSatTemp.toFixed(1)}°F</div>}
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{lang === 'es' ? 'Temp linea succion (°F)' : 'Suction Line Temp (°F)'}</label>
-                    <input type="number" value={suctionTemp} onChange={e => setSuctionTemp(e.target.value)} placeholder="e.g. 55" style={{ width: '100%', padding: '12px', border: `2px solid ${suctionTemp ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
+                    <input type="number" value={suctionTemp} onChange={e => setState({ suctionTemp: e.target.value })} placeholder="e.g. 55" style={{ width: '100%', padding: '12px', border: `2px solid ${suctionTemp ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
                   </div>
                 </div>
                 {superheat !== null && (
@@ -760,12 +746,12 @@ const handleHvacAnalysis = async () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{lang === 'es' ? 'Presion (PSI)' : 'Pressure (PSI)'}</label>
-                    <input type="number" value={hvacHigh} onChange={e => setHvacHigh(e.target.value)} placeholder="e.g. 250" style={{ width: '100%', padding: '12px', border: `2px solid ${hvacHigh ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
+                    <input type="number" value={hvacHigh} onChange={e => setState({ hvacHigh: e.target.value })} placeholder="e.g. 250" style={{ width: '100%', padding: '12px', border: `2px solid ${hvacHigh ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
                     {hvacHigh && highSatTemp !== null && <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', textAlign: 'center' }}>Sat. Temp: {highSatTemp.toFixed(1)}°F</div>}
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{lang === 'es' ? 'Temp linea liquido (°F)' : 'Liquid Line Temp (°F)'}</label>
-                    <input type="number" value={liquidTemp} onChange={e => setLiquidTemp(e.target.value)} placeholder="e.g. 95" style={{ width: '100%', padding: '12px', border: `2px solid ${liquidTemp ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
+                    <input type="number" value={liquidTemp} onChange={e => setState({ liquidTemp: e.target.value })} placeholder="e.g. 95" style={{ width: '100%', padding: '12px', border: `2px solid ${liquidTemp ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '18px', fontWeight: '700', textAlign: 'center', boxSizing: 'border-box', color: '#1B3A6B' }} />
                   </div>
                 </div>
                 {subcool !== null && (
@@ -802,7 +788,7 @@ const handleHvacAnalysis = async () => {
                   <div style={{ fontSize: '11px', color: '#14B8A6', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700' }}>Next Step</div>
                   <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', lineHeight: '1.4' }}>{hvacAnalysis.next_step}</div>
                 </div>
-                <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginTop: '14px' }} onClick={() => setStep('photos')}>
+                <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginTop: '14px' }} onClick={() => setState({ step: 'photos' })}>
                   Continue to Photos →
                 </button>
               </div>
@@ -812,7 +798,7 @@ const handleHvacAnalysis = async () => {
                 {lang === 'es' ? 'Completa todas las lecturas' : 'Complete all readings'}
               </button>
             )}
-            <button style={{ backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', width: '100%' }} onClick={() => setStep('ppe')}>
+            <button style={{ backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', width: '100%' }} onClick={() => setState({ step: 'ppe' })}>
               {lang === 'es' ? 'Volver' : 'Back'}
             </button>
           </div>
@@ -857,49 +843,52 @@ const handleHvacAnalysis = async () => {
   );
 }
 
-function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, lang, onVideoCall, checkedIn }) {
+// ── DiagnosisScreen ──
+// State is now lifted to App and passed in as `state` + `setState`.
+function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, lang, onVideoCall, checkedIn, state, setState }) {
   const t = STRINGS[lang];
-  const [mode, setMode] = useState('completed');
-  const [system, setSystem] = useState('');
-  const [category, setCategory] = useState('');
-  const [cause, setCause] = useState('');
-  const [diagnosis, setDiagnosis] = useState('');
-  const [parts, setParts] = useState([]);
-  const [newPart, setNewPart] = useState({ name: '', qty: 1, cost: '' });
+  const {
+    mode, system, category, cause, diagnosis, parts, newPart,
+    deferralReason, deferralNotes, deferralNextSteps, checkInTimeMs,
+  } = state;
   const [timeOnSite, setTimeOnSite] = useState('');
   const [listening, setListening] = useState(false);
-  const [deferralReason, setDeferralReason] = useState('');
-  const [deferralNotes, setDeferralNotes] = useState('');
-  const [deferralNextSteps, setDeferralNextSteps] = useState('');
   const [deferListening, setDeferListening] = useState(false);
-  const checkInTime = useRef(Date.now());
   const recognition = useRef(null);
   const deferRecognition = useRef(null);
 
+  // checkInTimeMs is set once per job (lifted state), so the timer keeps
+  // counting correctly even if the tech navigates back and forward again.
   useEffect(() => {
-    const iv = setInterval(() => {
-      const mins = Math.floor((Date.now() - checkInTime.current) / 60000);
+    if (!checkInTimeMs) {
+      setState({ checkInTimeMs: Date.now() });
+      setTimeOnSite('0m');
+      return;
+    }
+    const calc = () => {
+      const mins = Math.floor((Date.now() - checkInTimeMs) / 60000);
       const h = Math.floor(mins / 60);
       const m = mins % 60;
       setTimeOnSite(h > 0 ? `${h}h ${m}m` : `${m}m`);
-    }, 30000);
-    setTimeOnSite('0m');
+    };
+    calc();
+    const iv = setInterval(calc, 30000);
     return () => clearInterval(iv);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkInTimeMs]);
 
   const systems = Object.keys(ROOT_CAUSE_TREE);
   const categories = system ? Object.keys(ROOT_CAUSE_TREE[system]) : [];
   const causes = system && category ? ROOT_CAUSE_TREE[system][category] : [];
 
-  const handleSystemChange = (val) => { setSystem(val); setCategory(''); setCause(''); };
-  const handleCategoryChange = (val) => { setCategory(val); setCause(''); };
+  const handleSystemChange = (val) => { setState({ system: val, category: '', cause: '' }); };
+  const handleCategoryChange = (val) => { setState({ category: val, cause: '' }); };
 
   const addPart = () => {
     if (!newPart.name.trim()) return;
-    setParts(prev => [...prev, { ...newPart, id: Date.now() }]);
-    setNewPart({ name: '', qty: 1, cost: '' });
+    setState({ parts: [...parts, { ...newPart, id: Date.now() }], newPart: { name: '', qty: 1, cost: '' } });
   };
-  const removePart = (id) => setParts(prev => prev.filter(p => p.id !== id));
+  const removePart = (id) => setState({ parts: parts.filter(p => p.id !== id) });
 
   const diagnosisOk = diagnosis.trim().length >= 100;
   const rootCauseOk = system && category && cause;
@@ -930,7 +919,7 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
     r.lang = lang === 'es' ? 'es-MX' : 'en-US';
     r.continuous = true;
     r.interimResults = false;
-    r.onresult = (e) => { const transcript = Array.from(e.results).map(r => r[0].transcript).join(' '); setDeferralNotes(prev => prev ? prev + ' ' + transcript : transcript); };
+    r.onresult = (e) => { const transcript = Array.from(e.results).map(r => r[0].transcript).join(' '); setState({ deferralNotes: deferralNotes ? deferralNotes + ' ' + transcript : transcript }); };
     r.onerror = () => setDeferListening(false);
     r.onend = () => setDeferListening(false);
     deferRecognition.current = r;
@@ -959,10 +948,10 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
             {lang === 'es' ? 'Estado del trabajo' : 'Job Outcome'}
           </div>
           <div style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-            <button onClick={() => setMode('completed')} style={{ flex: 1, padding: '12px', border: 'none', cursor: 'pointer', backgroundColor: mode === 'completed' ? '#1B3A6B' : '#f9fafb', color: mode === 'completed' ? 'white' : '#6b7280', fontWeight: '700', fontSize: '14px', transition: 'all 0.15s' }}>
+            <button onClick={() => setState({ mode: 'completed' })} style={{ flex: 1, padding: '12px', border: 'none', cursor: 'pointer', backgroundColor: mode === 'completed' ? '#1B3A6B' : '#f9fafb', color: mode === 'completed' ? 'white' : '#6b7280', fontWeight: '700', fontSize: '14px', transition: 'all 0.15s' }}>
               ✅ {lang === 'es' ? 'Completado' : 'Completed'}
             </button>
-            <button onClick={() => setMode('deferred')} style={{ flex: 1, padding: '12px', border: 'none', borderLeft: '1px solid #e5e7eb', cursor: 'pointer', backgroundColor: mode === 'deferred' ? '#dc2626' : '#f9fafb', color: mode === 'deferred' ? 'white' : '#6b7280', fontWeight: '700', fontSize: '14px', transition: 'all 0.15s' }}>
+            <button onClick={() => setState({ mode: 'deferred' })} style={{ flex: 1, padding: '12px', border: 'none', borderLeft: '1px solid #e5e7eb', cursor: 'pointer', backgroundColor: mode === 'deferred' ? '#dc2626' : '#f9fafb', color: mode === 'deferred' ? 'white' : '#6b7280', fontWeight: '700', fontSize: '14px', transition: 'all 0.15s' }}>
               ⏸ {lang === 'es' ? 'Aplazado' : 'Deferred'}
             </button>
           </div>
@@ -983,7 +972,7 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
               <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 {lang === 'es' ? 'Selecciona una razon' : 'Select a reason'}
               </label>
-              <select style={selectStyle} value={deferralReason} onChange={e => setDeferralReason(e.target.value)}>
+              <select style={selectStyle} value={deferralReason} onChange={e => setState({ deferralReason: e.target.value })}>
                 <option value="">{lang === 'es' ? 'Seleccionar...' : 'Select...'}</option>
                 {deferralReasons.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
@@ -999,7 +988,7 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
               <div style={{ position: 'relative' }}>
                 <textarea style={{ width: '100%', padding: '12px', paddingRight: '52px', border: `1px solid ${deferralNotes.trim().length >= 50 ? '#22c55e' : '#e5e7eb'}`, borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', height: '120px', resize: 'none', lineHeight: '1.5' }}
                   placeholder={lang === 'es' ? 'Describe por que se aplaza este trabajo, que se intento y que se necesita para completarlo...' : 'Describe why this job is being deferred, what was attempted, and what is needed to complete it...'}
-                  value={deferralNotes} onChange={e => setDeferralNotes(e.target.value)} />
+                  value={deferralNotes} onChange={e => setState({ deferralNotes: e.target.value })} />
                 <button onClick={startDeferListen} style={{ position: 'absolute', right: '10px', top: '10px', width: '36px', height: '36px', borderRadius: '50%', border: 'none', cursor: 'pointer', backgroundColor: deferListening ? '#ef4444' : '#dc2626', color: 'white', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: deferListening ? '0 0 0 4px rgba(239,68,68,0.3)' : 'none' }}>
                   {deferListening ? '⏹' : '🎤'}
                 </button>
@@ -1021,7 +1010,7 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
               </div>
               <textarea style={{ width: '100%', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', height: '80px', resize: 'none', lineHeight: '1.5' }}
                 placeholder={lang === 'es' ? 'Ej: Coordinador ordenara la pieza, reprogramar en 3-5 dias...' : 'e.g. Coordinator will order part, reschedule within 3-5 days...'}
-                value={deferralNextSteps} onChange={e => setDeferralNextSteps(e.target.value)} />
+                value={deferralNextSteps} onChange={e => setState({ deferralNextSteps: e.target.value })} />
             </div>
 
             <div style={{ backgroundColor: deferralOk ? '#dc2626' : '#f9fafb', borderRadius: '12px', padding: '16px', border: `1px solid ${deferralOk ? 'transparent' : '#e5e7eb'}` }}>
@@ -1059,7 +1048,7 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t.cause}</label>
-                <select style={{ ...selectStyle, backgroundColor: category ? 'white' : '#f9fafb', color: category ? '#374151' : '#9ca3af' }} value={cause} onChange={e => setCause(e.target.value)} disabled={!category}>
+                <select style={{ ...selectStyle, backgroundColor: category ? 'white' : '#f9fafb', color: category ? '#374151' : '#9ca3af' }} value={cause} onChange={e => setState({ cause: e.target.value })} disabled={!category}>
                   <option value="">{t.selectCause}</option>
                   {causes.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -1075,7 +1064,7 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
               <div style={{ fontSize: '15px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>📝 {lang === 'es' ? 'Diagnostico y Cierre' : 'Diagnosis & Completion'}</div>
               <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>{t.diagnosisMin}</div>
               <div style={{ position: 'relative' }}>
-                <textarea style={{ width: '100%', padding: '12px', paddingRight: '52px', border: `1px solid ${diagnosisOk ? '#22c55e' : '#e5e7eb'}`, borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', height: '120px', resize: 'none', lineHeight: '1.5' }} placeholder={t.diagnosisPlaceholder} value={diagnosis} onChange={e => setDiagnosis(e.target.value)} />
+                <textarea style={{ width: '100%', padding: '12px', paddingRight: '52px', border: `1px solid ${diagnosisOk ? '#22c55e' : '#e5e7eb'}`, borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', height: '120px', resize: 'none', lineHeight: '1.5' }} placeholder={t.diagnosisPlaceholder} value={diagnosis} onChange={e => setState({ diagnosis: e.target.value })} />
                 <button onClick={() => {
                   if (listening) { recognition.current && recognition.current.stop(); setListening(false); return; }
                   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1084,7 +1073,7 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
                   r.lang = lang === 'es' ? 'es-MX' : 'en-US';
                   r.continuous = true;
                   r.interimResults = false;
-                  r.onresult = (e) => { const transcript = Array.from(e.results).map(r => r[0].transcript).join(' '); setDiagnosis(prev => prev ? prev + ' ' + transcript : transcript); };
+                  r.onresult = (e) => { const transcript = Array.from(e.results).map(r => r[0].transcript).join(' '); setState({ diagnosis: diagnosis ? diagnosis + ' ' + transcript : transcript }); };
                   r.onerror = () => setListening(false);
                   r.onend = () => setListening(false);
                   recognition.current = r;
@@ -1122,9 +1111,9 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
                 </div>
               )}
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                <input style={{ flex: 1, padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }} placeholder={t.partName} value={newPart.name} onChange={e => setNewPart(p => ({ ...p, name: e.target.value }))} />
-                <input style={{ width: '52px', padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', textAlign: 'center', boxSizing: 'border-box' }} type="number" min="1" placeholder={t.qty} value={newPart.qty} onChange={e => setNewPart(p => ({ ...p, qty: parseInt(e.target.value) || 1 }))} />
-                <input style={{ width: '72px', padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }} type="number" min="0" step="0.01" placeholder="$cost" value={newPart.cost} onChange={e => setNewPart(p => ({ ...p, cost: e.target.value }))} />
+                <input style={{ flex: 1, padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }} placeholder={t.partName} value={newPart.name} onChange={e => setState({ newPart: { ...newPart, name: e.target.value } })} />
+                <input style={{ width: '52px', padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', textAlign: 'center', boxSizing: 'border-box' }} type="number" min="1" placeholder={t.qty} value={newPart.qty} onChange={e => setState({ newPart: { ...newPart, qty: parseInt(e.target.value) || 1 } })} />
+                <input style={{ width: '72px', padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }} type="number" min="0" step="0.01" placeholder="$cost" value={newPart.cost} onChange={e => setState({ newPart: { ...newPart, cost: e.target.value } })} />
               </div>
               <button style={{ width: '100%', padding: '10px', backgroundColor: newPart.name.trim() ? '#f0fdf4' : '#f9fafb', color: newPart.name.trim() ? '#15803d' : '#9ca3af', border: `1px solid ${newPart.name.trim() ? '#22c55e' : '#e5e7eb'}`, borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: newPart.name.trim() ? 'pointer' : 'default' }} onClick={addPart} disabled={!newPart.name.trim()}>
                 {t.addPart}
@@ -1153,19 +1142,23 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
     </div>
   );
 }
-function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBack, lang, ppeConfirmed }) {
+
+// ── Gate1Screen ──
+// Revised checklist: 9 items (down from 14).
+// Removed: "No new issues identified", "Resident informed of outcome" (+ contact
+// picker), "Capital item flagged if applicable", and the digital signature step.
+// "After photos" is now auto-checked/greyed out, same as "Before photos".
+// GPS check-out no longer has its own row/button — it fires automatically
+// the moment the tech taps the final Submit button (see handleSubmitClick).
+//
+// State (checked / afterPhotos / gpsOut / etc.) is lifted to App so it
+// survives back-navigation. `checked` starts as null in initial state;
+// we lazily initialize it to the correct array the first time this screen
+// mounts for a given job.
+function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBack, lang, ppeConfirmed, state, setState }) {
   const t = STRINGS[lang];
   const isDeferred = diagData?.mode === 'deferred';
-  const autoChecked = {
-    0: (checkInData?.photos?.length || 0) >= 2,
-    1: false,
-    2: isDeferred ? true : !!diagData?.system && !!diagData?.category && !!diagData?.cause,
-    3: isDeferred ? true : (diagData?.diagnosis?.trim().length || 0) >= 100,
-    4: true,
-    5: !!checkInData?.rvc,
-    6: true,
-    10: !!ppeConfirmed,
-  };
+
   const checklistItems = lang === 'es' ? [
     'Fotos previas subidas (min 2)',
     'Fotos posteriores subidas (min 2)',
@@ -1175,12 +1168,7 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
     'RVC verificado con el residente',
     'Reparacion Cerrada o Aplazamiento Anotado',
     'Area de trabajo limpia y restaurada',
-    'No se identificaron nuevos problemas',
-    'Residente informado del resultado',
     'EPP adecuado usado durante el trabajo',
-    'GPS check-out registrado',
-    'Articulo de capital marcado si aplica',
-    'Firma digital obtenida',
   ] : [
     'Before photos uploaded (min 2)',
     'After photos uploaded (min 2)',
@@ -1190,31 +1178,39 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
     'RVC verified with resident',
     'Repair Closed or Deferral Noted',
     'Work area cleaned and restored',
-    'No new issues identified',
-    'Resident informed of outcome',
     'Proper PPE was used throughout job',
-    'GPS check-out recorded',
-    'Capital item flagged if applicable',
-    'Digital signature obtained',
   ];
 
-  const [checked, setChecked] = useState(() => checklistItems.map((_, i) => autoChecked[i] || false));
-  const [afterPhotos, setAfterPhotos] = useState([]);
-  const [sigMode, setSigMode] = useState(false);
-  const [signed, setSigned] = useState(false);
-  const [gpsOut, setGpsOut] = useState(null);
-  const [gpsOutLoading, setGpsOutLoading] = useState(false);
-  const [contactMethod, setContactMethod] = useState('');
-  const [showContactPicker, setShowContactPicker] = useState(false);
+  const autoChecked = {
+    0: (checkInData?.photos?.length || 0) >= 2,
+    1: (state.afterPhotos?.length || 0) >= 2,
+    2: isDeferred ? true : !!diagData?.system && !!diagData?.category && !!diagData?.cause,
+    3: isDeferred ? true : (diagData?.diagnosis?.trim().length || 0) >= 100,
+    5: !!checkInData?.rvc,
+  };
+
+  // Lazily initialize `checked` the first time this screen renders for a job.
+  if (state.checked === null) {
+    setState({ checked: checklistItems.map((_, i) => autoChecked[i] || false) });
+    return null; // re-renders immediately with checked set
+  }
+  const checked = state.checked;
+  const { afterPhotos, sigMode, signed, gpsOut, contactMethod } = state;
+
   const afterPhotoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const drawing = useRef(false);
+
+  // Keep auto-checked items in sync as their underlying data changes
+  // (e.g. after photos uploaded after this screen already mounted).
+  useEffect(() => {
+    setState({
+      checked: checklistItems.map((_, i) => (i in autoChecked) ? autoChecked[i] : checked[i]),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkInData?.photos?.length, afterPhotos?.length, diagData?.system, diagData?.category, diagData?.cause, diagData?.diagnosis, checkInData?.rvc]);
 
   const toggleCheck = (i) => {
-    if (i === 13 && !signed) return;
-    if (i === 9) return;
-    if (i === 11) return;
-    setChecked(prev => prev.map((v, idx) => idx === i ? !v : v));
+    if (i in autoChecked) return; // auto items aren't manually toggleable
+    setState({ checked: checked.map((v, idx) => idx === i ? !v : v) });
   };
 
   const handleAfterPhoto = (e) => {
@@ -1222,68 +1218,52 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        setAfterPhotos(prev => {
-          const updated = [...prev, { url: ev.target.result, time: new Date().toLocaleTimeString() }];
-          if (updated.length >= 2) setChecked(prev2 => prev2.map((v, i) => i === 1 ? true : v));
-          return updated;
-        });
+        setState({ afterPhotos: [...(state.afterPhotos || []), { url: ev.target.result, time: new Date().toLocaleTimeString() }] });
       };
       reader.readAsDataURL(file);
     });
   };
 
-  const startDraw = (e) => {
-    drawing.current = true;
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const ctx = canvas.getContext('2d');
-    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  };
-  const draw = (e) => {
-    if (!drawing.current) return;
-    e.preventDefault();
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const ctx = canvas.getContext('2d');
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = '#1B3A6B';
-    ctx.lineCap = 'round';
-    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-    ctx.lineTo(x, y);
-    ctx.stroke();
-  };
-  const endDraw = () => { drawing.current = false; };
-  const clearSig = () => {
-    const canvas = canvasRef.current;
-    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-    setSigned(false);
-    setChecked(prev => prev.map((v, i) => i === 13 ? false : v));
-  };
-  const acceptSig = () => {
-    const canvas = canvasRef.current;
-    const blank = document.createElement('canvas');
-    blank.width = canvas.width; blank.height = canvas.height;
-    if (canvas.toDataURL() === blank.toDataURL()) return;
-    setSigned(true);
-    setSigMode(false);
-    setChecked(prev => prev.map((v, i) => i === 13 ? true : v));
-  };
-
-  const requiredCount = diagData?.mode === 'deferred' ? 12 : 14;
+  const requiredCount = checklistItems.length; // 9 for completed and deferred alike
   const totalChecked = checked.filter(Boolean).length;
   const allChecked = totalChecked >= requiredCount;
   const progress = totalChecked / requiredCount;
+
+  const [gpsOutLoading, setGpsOutLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  // Combined action: fire GPS check-out (if not already captured), then submit.
+  const handleSubmitClick = () => {
+    if (gpsOut) {
+      onComplete({ afterPhotos, signed, totalChecked, gpsOut });
+      return;
+    }
+    setSubmitError('');
+    setGpsOutLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setState({ gpsOut: coords });
+        setGpsOutLoading(false);
+        onComplete({ afterPhotos, signed, totalChecked, gpsOut: coords });
+      },
+      (err) => {
+        console.error('GPS check-out error:', err);
+        setGpsOutLoading(false);
+        // Don't block submission on GPS failure — proceed without coords,
+        // same spirit as the manual check-in fallback.
+        onComplete({ afterPhotos, signed, totalChecked, gpsOut: null });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', paddingBottom: '100px' }}>
       <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '8px' }}>{t.back}</button>
         <div style={{ fontSize: '16px', fontWeight: '700' }}>Gate 1 - {lang === 'es' ? 'Pre-cierre' : 'Pre-close'}</div>
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>{lang === 'es' ? 'Certificacion de 14 puntos requerida' : '14-point certification required'}</div>
+        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>{lang === 'es' ? `Lista de ${requiredCount} puntos requerida` : `${requiredCount}-point checklist required`}</div>
       </div>
 
       <div style={{ backgroundColor: 'white', padding: '12px 16px', borderBottom: '1px solid #e5e7eb' }}>
@@ -1308,51 +1288,27 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
           </div>
         )}
         <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '4px 0', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '12px' }}>
-          {checklistItems.map((item, i) => (
-            <div key={i} onClick={() => toggleCheck(i)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 16px', borderBottom: i < 13 ? '1px solid #f3f4f6' : 'none', cursor: i === 13 && !signed ? 'default' : 'pointer', opacity: i === 13 && !signed ? 0.5 : 1 }}>
-              <div style={{ width: '22px', height: '22px', borderRadius: '6px', border: `2px solid ${checked[i] ? '#14B8A6' : '#d1d5db'}`, backgroundColor: checked[i] ? '#14B8A6' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
-                {checked[i] && <span style={{ color: 'white', fontSize: '13px', fontWeight: '700' }}>✓</span>}
+          {checklistItems.map((item, i) => {
+            const isAuto = i in autoChecked;
+            return (
+              <div key={i} onClick={() => toggleCheck(i)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 16px', borderBottom: i < checklistItems.length - 1 ? '1px solid #f3f4f6' : 'none', cursor: isAuto ? 'default' : 'pointer', opacity: isAuto ? 0.6 : 1 }}>
+                <div style={{ width: '22px', height: '22px', borderRadius: '6px', border: `2px solid ${checked[i] ? '#14B8A6' : '#d1d5db'}`, backgroundColor: checked[i] ? '#14B8A6' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                  {checked[i] && <span style={{ color: 'white', fontSize: '13px', fontWeight: '700' }}>✓</span>}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '13px', color: checked[i] ? '#6b7280' : '#374151', textDecoration: checked[i] ? 'line-through' : 'none' }}>{item}</div>
+                  {i === 0 && <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{lang === 'es' ? `${checkInData?.photos?.length || 0} foto(s) capturada(s)` : `${checkInData?.photos?.length || 0} captured`}</div>}
+                  {i === 1 && <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{lang === 'es' ? `${afterPhotos.length} foto(s) posterior(es)` : `${afterPhotos.length} after photos`}</div>}
+                </div>
+                {isAuto && <span style={{ fontSize: '10px', color: '#14B8A6', fontWeight: '700' }}>AUTO</span>}
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', color: checked[i] ? '#6b7280' : '#374151', textDecoration: checked[i] ? 'line-through' : 'none' }}>{item}</div>
-                {i === 0 && <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{lang === 'es' ? `${checkInData?.photos?.length || 0} foto(s) capturada(s)` : `${checkInData?.photos?.length || 0} captured`}</div>}
-                {i === 1 && <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{lang === 'es' ? `${afterPhotos.length} foto(s) posterior(es)` : `${afterPhotos.length} after photos`}</div>}
-                {i === 9 && contactMethod && <div style={{ fontSize: '11px', color: '#14B8A6', marginTop: '2px', fontWeight: '600' }}>via {contactMethod}</div>}
-              </div>
-              {i === 0 && autoChecked[0] && <span style={{ fontSize: '10px', color: '#14B8A6', fontWeight: '700' }}>AUTO</span>}
-              {i === 2 && autoChecked[2] && <span style={{ fontSize: '10px', color: '#14B8A6', fontWeight: '700' }}>AUTO</span>}
-              {i === 3 && autoChecked[3] && <span style={{ fontSize: '10px', color: '#14B8A6', fontWeight: '700' }}>AUTO</span>}
-              {i === 5 && autoChecked[5] && <span style={{ fontSize: '10px', color: '#14B8A6', fontWeight: '700' }}>AUTO</span>}
-              {i === 9 && !contactMethod && <button onClick={(e) => { e.stopPropagation(); setShowContactPicker(true); }} style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 }}>Log →</button>}
-              {i === 9 && contactMethod && <span style={{ fontSize: '10px', color: '#14B8A6', fontWeight: '700' }}>✓</span>}
-              {i === 11 && !gpsOut && (
-                <button onClick={(e) => { e.stopPropagation(); setGpsOutLoading(true); navigator.geolocation.getCurrentPosition((position) => { const coords = { lat: position.coords.latitude, lng: position.coords.longitude }; setGpsOut(coords); setGpsOutLoading(false); setChecked(prev => prev.map((v, idx) => idx === 11 ? true : v)); }, (err) => { console.error('GPS error:', err); setGpsOutLoading(false); }, { enableHighAccuracy: true, timeout: 10000 }); }} style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', flexShrink: 0 }}>
-                  {gpsOutLoading ? '...' : '📍 Check Out'}
-                </button>
-              )}
-              {i === 11 && gpsOut && <span style={{ fontSize: '10px', color: '#14B8A6', fontWeight: '700' }}>✓ GPS</span>}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {showContactPicker && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
-            <div style={{ backgroundColor: 'white', borderRadius: '16px 16px 0 0', padding: '24px', width: '100%', maxWidth: '430px' }}>
-              <div style={{ fontSize: '16px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>How was the resident notified?</div>
-              <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>Select the contact method used</div>
-              {['Knocked on door', 'Phone call', 'Text message', 'Left door hanger', 'No contact - left note'].map(method => (
-                <button key={method} onClick={() => { setContactMethod(method); setShowContactPicker(false); setChecked(prev => prev.map((v, idx) => idx === 9 ? true : v)); }} style={{ width: '100%', padding: '14px', marginBottom: '8px', backgroundColor: '#f0f4ff', color: '#1B3A6B', border: '1px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', textAlign: 'left' }}>
-                  {method}
-                </button>
-              ))}
-              <button onClick={() => setShowContactPicker(false)} style={{ width: '100%', padding: '12px', backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', cursor: 'pointer', marginTop: '4px' }}>Cancel</button>
-            </div>
-          </div>
-        )}
-
         <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '12px' }}>
-          <div style={{ fontSize: '15px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>📷 {lang === 'es' ? 'Fotos posteriores' : 'After Photos'} {isDeferred && <span style={{ fontSize: '11px', backgroundColor: '#f3f4f6', color: '#6b7280', padding: '2px 8px', borderRadius: '10px', fontWeight: '600', marginLeft: '6px' }}>{lang === 'es' ? 'Opcional' : 'Optional'}</span>}</div>
-          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>{isDeferred ? (lang === 'es' ? 'Opcional para trabajos aplazados' : 'Optional for deferred jobs') : (lang === 'es' ? 'Se requieren minimo 2 fotos posteriores' : 'Minimum 2 after photos required')}</div>
+          <div style={{ fontSize: '15px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>📷 {lang === 'es' ? 'Fotos posteriores' : 'After Photos'}</div>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>{lang === 'es' ? 'Se requieren minimo 2 fotos posteriores' : 'Minimum 2 after photos required'}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '12px' }}>
             {afterPhotos.map((p, i) => (
               <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', border: '2px solid #14B8A6' }}>
@@ -1368,37 +1324,6 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
           <input ref={afterPhotoRef} type="file" accept="image/*" capture="environment" multiple style={{ display: 'none' }} onChange={handleAfterPhoto} />
         </div>
 
-        <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '12px' }}>
-          <div style={{ fontSize: '15px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>✍️ {lang === 'es' ? 'Firma digital' : 'Digital Signature'} {isDeferred && <span style={{ fontSize: '11px', backgroundColor: '#f3f4f6', color: '#6b7280', padding: '2px 8px', borderRadius: '10px', fontWeight: '600', marginLeft: '6px' }}>{lang === 'es' ? 'Opcional' : 'Optional'}</span>}</div>
-          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>{isDeferred ? (lang === 'es' ? 'Opcional para trabajos aplazados' : 'Optional for deferred jobs') : (lang === 'es' ? 'El residente debe firmar para confirmar la finalizacion' : 'Resident must sign to confirm completion')}</div>
-          {!sigMode && !signed && (
-            <button onClick={() => setSigMode(true)} style={{ width: '100%', padding: '14px', backgroundColor: '#f0f4ff', color: '#1B3A6B', border: '2px dashed #1B3A6B', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
-              {lang === 'es' ? 'Toca para firmar →' : 'Tap to sign →'}
-            </button>
-          )}
-          {sigMode && (
-            <div>
-              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>{lang === 'es' ? 'Firma en el recuadro de abajo' : 'Sign in the box below'}</div>
-              <canvas ref={canvasRef} width={340} height={150} style={{ border: '2px solid #1B3A6B', borderRadius: '10px', width: '100%', touchAction: 'none', backgroundColor: '#f9fafb', display: 'block' }}
-                onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw}
-                onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} />
-              <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                <button onClick={clearSig} style={{ flex: 1, padding: '10px', backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>{lang === 'es' ? 'Borrar' : 'Clear'}</button>
-                <button onClick={acceptSig} style={{ flex: 2, padding: '10px', backgroundColor: '#1B3A6B', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '700' }}>{lang === 'es' ? 'Aceptar firma' : 'Accept Signature'}</button>
-              </div>
-            </div>
-          )}
-          {signed && !sigMode && (
-            <div style={{ backgroundColor: '#f0fdf4', borderRadius: '10px', padding: '14px', border: '2px solid #22c55e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ color: '#15803d', fontWeight: '700', fontSize: '14px' }}>✅ {lang === 'es' ? 'Firma obtenida' : 'Signature obtained'}</div>
-                <div style={{ color: '#6b7280', fontSize: '12px', marginTop: '2px' }}>{new Date().toLocaleTimeString()}</div>
-              </div>
-              <button onClick={() => { setSigMode(true); setSigned(false); setChecked(prev => prev.map((v, i) => i === 13 ? false : v)); }} style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '12px' }}>{lang === 'es' ? 'Repetir' : 'Redo'}</button>
-            </div>
-          )}
-        </div>
-
         <div style={{ backgroundColor: allChecked ? '#1B3A6B' : '#f9fafb', borderRadius: '12px', padding: '16px', border: `1px solid ${allChecked ? 'transparent' : '#e5e7eb'}` }}>
           {!allChecked && (
             <div style={{ marginBottom: '12px', padding: '10px 14px', backgroundColor: '#fef9ec', borderRadius: '8px', border: '1px solid #fbbf24' }}>
@@ -1407,9 +1332,12 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
               </div>
             </div>
           )}
-          <button style={{ width: '100%', padding: '14px', backgroundColor: allChecked ? '#14B8A6' : '#d1d5db', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: allChecked ? 'pointer' : 'not-allowed' }} disabled={!allChecked}
-            onClick={() => onComplete({ afterPhotos, signed, totalChecked })}>
-            {allChecked ? (lang === 'es' ? '✅ Enviar Gate 1' : '✅ Submit Gate 1') : (lang === 'es' ? 'Completa todos los elementos' : 'Complete all items')}
+          {submitError && (
+            <div style={{ marginBottom: '12px', fontSize: '13px', color: '#dc2626' }}>{submitError}</div>
+          )}
+          <button style={{ width: '100%', padding: '14px', backgroundColor: allChecked ? '#14B8A6' : '#d1d5db', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: allChecked && !gpsOutLoading ? 'pointer' : 'not-allowed' }} disabled={!allChecked || gpsOutLoading}
+            onClick={handleSubmitClick}>
+            {gpsOutLoading ? (lang === 'es' ? '📍 Registrando salida...' : '📍 Recording check-out...') : allChecked ? (lang === 'es' ? '✅ Enviar Gate 1' : '✅ Submit Gate 1') : (lang === 'es' ? 'Completa todos los elementos' : 'Complete all items')}
           </button>
         </div>
       </div>
@@ -1875,6 +1803,54 @@ function AdminDashboard({ tech, token, onLogout, lang, setLang }) {
   );
 }
 
+// Initial values for the lifted check-in / diagnosis / gate1 form state.
+// Pulled out so resetJobState() and useState() can both reference the
+// same shape, and so each screen's state survives back/forward navigation
+// (it now lives in App, not in the screen component itself).
+const initialCheckInState = {
+  step: 'gps',
+  gpsStatus: 'idle',
+  gpsCoords: null,
+  photos: [],
+  touch3Fired: false,
+  showRvcPicker: false,
+  rvcMethod: '',
+  ppeConfirmed: false,
+  unitConfirm: '',
+  gpsFailCount: 0,
+  hvacLow: '',
+  hvacHigh: '',
+  refrigerantType: '',
+  expansionValve: 'TXV',
+  suctionTemp: '',
+  liquidTemp: '',
+  hvacAnalysis: null,
+  hvacAnalysisLoading: false,
+};
+
+const initialDiagnosisState = {
+  mode: 'completed',
+  system: '',
+  category: '',
+  cause: '',
+  diagnosis: '',
+  parts: [],
+  newPart: { name: '', qty: 1, cost: '' },
+  deferralReason: '',
+  deferralNotes: '',
+  deferralNextSteps: '',
+  checkInTimeMs: null,
+};
+
+const initialGate1State = {
+  checked: null, // null = not yet initialized for this job; Gate1Screen lazily fills this in
+  afterPhotos: [],
+  sigMode: false,
+  signed: false,
+  gpsOut: null,
+  contactMethod: '',
+};
+
 export default function App() {
   const [tech, setTech] = useState(() => { const s = localStorage.getItem('techUser'); return s ? JSON.parse(s) : null; });
   const [token, setToken] = useState(() => localStorage.getItem('techToken') || '');
@@ -1886,6 +1862,27 @@ export default function App() {
   const [videoToken, setVideoToken] = useState(null);
   const [videoRoom, setVideoRoom] = useState(null);
   const [lang, setLang] = useState(() => localStorage.getItem('techLang') || 'en');
+
+  // Lifted form state for the check-in / diagnosis / gate1 screens.
+  // Living here (in App) instead of inside each screen component means
+  // navigating back (onBack) and forward again doesn't remount-and-wipe
+  // the screen's fields — only resetJobState() (called when a job is
+  // fully submitted or abandoned) clears them.
+  const [checkInState, setCheckInState] = useState(initialCheckInState);
+  const [diagnosisState, setDiagnosisState] = useState(initialDiagnosisState);
+  const [gate1State, setGate1State] = useState(initialGate1State);
+
+  // Shallow-merge setters, so screens can call setState({ field: value })
+  // instead of replacing the whole state object each time.
+  const updateCheckInState = (patch) => setCheckInState(prev => ({ ...prev, ...patch }));
+  const updateDiagnosisState = (patch) => setDiagnosisState(prev => ({ ...prev, ...patch }));
+  const updateGate1State = (patch) => setGate1State(prev => ({ ...prev, ...patch }));
+
+  const resetJobState = () => {
+    setCheckInState(initialCheckInState);
+    setDiagnosisState(initialDiagnosisState);
+    setGate1State(initialGate1State);
+  };
 
   const handleLangChange = (l) => { setLang(l); localStorage.setItem('techLang', l); };
   const handleLogin = (techData) => { setTech(techData); setToken(localStorage.getItem('techToken')); };
@@ -1924,6 +1921,8 @@ export default function App() {
         time_on_site: diagData?.timeOnSite,
         checklist_completed: data.totalChecked,
         signed: data.signed,
+        gps_checkout_lat: data.gpsOut?.lat || null,
+        gps_checkout_lng: data.gpsOut?.lng || null,
         hvac_low_side_psi: checkInData?.hvacLow || null,
         hvac_high_side_psi: checkInData?.hvacHigh || null,
         refrigerant_type: checkInData?.refrigerantType || null,
@@ -1947,6 +1946,7 @@ export default function App() {
     setCheckInData(null);
     setDiagData(null);
     setGate1Data(null);
+    resetJobState();
   };
   const handleVideoCall = async (job) => {
   try {
@@ -1975,6 +1975,14 @@ export default function App() {
     return `${t.hi}, ${tech.first_name} 👋`;
   };
 
+  // Starting a brand new job (from JobDetail's "Begin Check-In") should
+  // start with a clean slate, in case leftover state exists from a
+  // previous job that wasn't fully submitted.
+  const handleBeginCheckIn = () => {
+    resetJobState();
+    setScreen('checkin');
+  };
+
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: '430px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
       {screen !== 'checkin' && screen !== 'diagnosis' && (
@@ -1993,10 +2001,10 @@ export default function App() {
         </div>
       )}
       {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} />}
-      {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={() => setScreen('checkin')} onVideoCall={handleVideoCall} lang={lang} />}
-      {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} />}
-      {screen === 'diagnosis' && selectedJob && <DiagnosisScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} onComplete={handleDiagnosisComplete} onBack={() => setScreen('checkin')} lang={lang} onVideoCall={handleVideoCall} checkedIn={selectedJob.tech_checked_in} />}
-      {screen === 'gate1' && selectedJob && <Gate1Screen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} onComplete={handleGate1Complete} onBack={() => setScreen('diagnosis')} lang={lang} ppeConfirmed={checkInData?.ppeConfirmed} />}
+      {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={handleBeginCheckIn} onVideoCall={handleVideoCall} lang={lang} />}
+      {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} state={checkInState} setState={updateCheckInState} />}
+      {screen === 'diagnosis' && selectedJob && <DiagnosisScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} onComplete={handleDiagnosisComplete} onBack={() => setScreen('checkin')} lang={lang} onVideoCall={handleVideoCall} checkedIn={selectedJob.tech_checked_in} state={diagnosisState} setState={updateDiagnosisState} />}
+      {screen === 'gate1' && selectedJob && <Gate1Screen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} onComplete={handleGate1Complete} onBack={() => setScreen('diagnosis')} lang={lang} ppeConfirmed={checkInData?.ppeConfirmed} state={gate1State} setState={updateGate1State} />}
       {screen === 'submitted' && selectedJob && <SubmittedScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} gate1Data={gate1Data} onNext={handleSubmittedNext} lang={lang} />}
       {screen === 'video' && selectedJob && videoToken && <VideoCallScreen job={selectedJob} token={videoToken} roomName={videoRoom} onBack={() => setScreen('detail')} lang={lang} />}
     </div>
