@@ -426,6 +426,8 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
   const [expansionValve, setExpansionValve] = useState('TXV');
   const [suctionTemp, setSuctionTemp] = useState('');
   const [liquidTemp, setLiquidTemp] = useState('');
+  const [hvacAnalysis, setHvacAnalysis] = useState(null);
+  const [hvacAnalysisLoading, setHvacAnalysisLoading] = useState(false);
   const isHvac = job?.title?.toLowerCase().includes('hvac') || job?.description?.toLowerCase().includes('hvac') || job?.title?.toLowerCase().includes('ac ') || job?.title?.toLowerCase().includes('air') || job?.description?.toLowerCase().includes('cooling') || job?.description?.toLowerCase().includes('heating') || job?.category?.toLowerCase().includes('hvac') || (job?.title || '').toLowerCase().includes('hvac') || (job?.description || '').toLowerCase().includes('hvac') || (job?.description || '').toLowerCase().includes('ac ') || (job?.description || '').toLowerCase().includes('cold');
   const steps = isHvac ? [t.gpsStep, t.rvcStep, 'PPE', 'Gauges', t.photosStep] : [t.gpsStep, t.rvcStep, 'PPE', t.photosStep];
   const stepIndex = step === 'gps' ? 0 : step === 'rvc' ? 1 : step === 'ppe' ? 2 : step === 'hvac' ? 3 : (isHvac ? 4 : 3);
@@ -637,9 +639,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang }) {
         const shStatus = getStatus(superheat, 'superheat');
         const scStatus = getStatus(subcool, 'subcool');
         const statusStyle = (s) => s === 'green' ? { bg: '#f0fdf4', border: '#22c55e', text: '#15803d', icon: '🟢' } : s === 'yellow' ? { bg: '#fefce8', border: '#fbbf24', text: '#92400e', icon: '🟡' } : { bg: '#fef2f2', border: '#ef4444', text: '#dc2626', icon: '🔴' };
-        const [hvacAnalysis, setHvacAnalysis] = useState(null);
-const [hvacAnalysisLoading, setHvacAnalysisLoading] = useState(false);
-const canContinue = refrigerantType && hvacLow && hvacHigh && suctionTemp && liquidTemp;
+        const canContinue = refrigerantType && hvacLow && hvacHigh && suctionTemp && liquidTemp;
 
 const handleHvacAnalysis = async () => {
   setHvacAnalysisLoading(true);
