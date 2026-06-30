@@ -417,7 +417,7 @@ function CheckInScreen({ job, tech, token, onComplete, onBack, lang, state, setS
   const t = STRINGS[lang];
   const {
     step, gpsStatus, gpsCoords, photos, touch3Fired, showRvcPicker, rvcMethod,
-    ppeConfirmed, unitConfirm, gpsFailCount, hvacLow, hvacHigh, refrigerantType,
+    ppeConfirmed, unitConfirm, hvacLow, hvacHigh, refrigerantType,
     expansionValve, suctionTemp, liquidTemp, hvacAnalysis, hvacAnalysisLoading,
   } = state;
 
@@ -1194,7 +1194,7 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
   // initialized. So every useState/useRef/useEffect lives here, above any
   // early return, even though some of their values aren't used until
   // `checked` is set a moment later.
-  const { afterPhotos, sigMode, signed, gpsOut, contactMethod } = state;
+  const { afterPhotos, signed, gpsOut } = state;
   const afterPhotoRef = useRef(null);
   const [gpsOutLoading, setGpsOutLoading] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -1860,10 +1860,8 @@ const initialDiagnosisState = {
 const initialGate1State = {
   checked: null, // null = not yet initialized for this job; Gate1Screen lazily fills this in
   afterPhotos: [],
-  sigMode: false,
   signed: false,
   gpsOut: null,
-  contactMethod: '',
 };
 
 export default function App() {
