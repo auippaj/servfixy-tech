@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import TaskScreen from './TaskScreen';
 
 const API = 'https://servfixy-production.up.railway.app/api';
 
@@ -2013,6 +2014,7 @@ export default function App() {
           </div>
         </div>
       )}
+      {screen === 'list' && <div onClick={() => setScreen('tasks')} style={{ backgroundColor: '#14B8A6', color: 'white', padding: '14px 16px', margin: '12px 16px 0', borderRadius: '10px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🧪 Rounds & Tasks</span><span>→</span></div>}
       {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} />}
       {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={handleBeginCheckIn} onVideoCall={handleVideoCall} lang={lang} />}
       {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} state={checkInState} setState={updateCheckInState} />}
@@ -2020,6 +2022,7 @@ export default function App() {
       {screen === 'gate1' && selectedJob && <Gate1Screen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} onComplete={handleGate1Complete} onBack={() => setScreen('diagnosis')} lang={lang} ppeConfirmed={checkInData?.ppeConfirmed} state={gate1State} setState={updateGate1State} />}
       {screen === 'submitted' && selectedJob && <SubmittedScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} gate1Data={gate1Data} onNext={handleSubmittedNext} lang={lang} />}
       {screen === 'video' && selectedJob && videoToken && <VideoCallScreen job={selectedJob} token={videoToken} roomName={videoRoom} onBack={() => setScreen('detail')} lang={lang} />}
+      {screen === 'tasks' && <TaskScreen token={token} lang={lang} onBack={() => setScreen('list')} />}
     </div>
   );
 }
