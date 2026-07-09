@@ -398,9 +398,10 @@ function JobList({ tech, token, onSelectJob, lang }) {
           </div>
         );
       })}
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-        <span>{t.gpsActive}</span>
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+        <button onClick={() => setShow911Confirm(true)} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
         <span style={{ backgroundColor: '#14B8A6', padding: '3px 10px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
+        <button onClick={handleSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
       </div>
     </div>
   );
@@ -836,9 +837,10 @@ const handleHvacAnalysis = async () => {
         </div>
       )}
 
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-        <span>{t.gpsActive}</span>
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+        <button onClick={() => setShow911Confirm(true)} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
         <span style={{ backgroundColor: '#14B8A6', padding: '3px 10px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
+        <button onClick={handleSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
       </div>
     </div>
   );
@@ -1136,9 +1138,10 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
         )}
       </div>
 
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-        <span>{t.gpsActive}</span>
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+        <button onClick={() => setShow911Confirm(true)} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
         <span style={{ backgroundColor: '#14B8A6', padding: '3px 10px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
+        <button onClick={handleSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
       </div>
     </div>
   );
@@ -1358,9 +1361,10 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
         </div>
       </div>
 
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-        <span>{t.gpsActive}</span>
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+        <button onClick={() => setShow911Confirm(true)} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
         <span style={{ backgroundColor: '#14B8A6', padding: '3px 10px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
+        <button onClick={handleSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
       </div>
     </div>
   );
@@ -1876,6 +1880,74 @@ export default function App() {
   const [videoToken, setVideoToken] = useState(null);
   const [videoRoom, setVideoRoom] = useState(null);
   const [lang, setLang] = useState(() => localStorage.getItem('techLang') || 'en');
+  const [show911Confirm, setShow911Confirm] = useState(false);
+  const [showSupportUnavailable, setShowSupportUnavailable] = useState(false);
+
+  const handleSupportCall = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    const timeVal = hour * 60 + minute;
+    const monFri = day >= 1 && day <= 5;
+    const sat = day === 6;
+    const inHours = (monFri && timeVal >= 420 && timeVal < 1140) || (sat && timeVal >= 540 && timeVal < 1020);
+    if (inHours) {
+      handleSupportVideoCall();
+    } else {
+      setShowSupportUnavailable(true);
+    }
+  };
+
+  const handleSupportVideoCall = async () => {
+    try {
+      const res = await axios.post(`${API}/video/token`, {
+        serviceRequestId: null,
+        techId: tech.id,
+        techName: `${tech.first_name} ${tech.last_name}`,
+        roomName: `support-${tech.id}-${Date.now()}`,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      setVideoToken(res.data.token);
+      setVideoRoom(res.data.roomName);
+      setScreen('video');
+    } catch (err) {
+      alert('Failed to start support call. Please try again.');
+    }
+  };
+  const [show911Confirm, setShow911Confirm] = useState(false);
+  const [showSupportUnavailable, setShowSupportUnavailable] = useState(false);
+
+  const handleSupportCall = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    const timeVal = hour * 60 + minute;
+    const monFri = day >= 1 && day <= 5;
+    const sat = day === 6;
+    const inHours = (monFri && timeVal >= 420 && timeVal < 1140) || (sat && timeVal >= 540 && timeVal < 1020);
+    if (inHours) {
+      handleSupportVideoCall();
+    } else {
+      setShowSupportUnavailable(true);
+    }
+  };
+
+  const handleSupportVideoCall = async () => {
+    try {
+      const res = await axios.post(`${API}/video/token`, {
+        serviceRequestId: null,
+        techId: tech.id,
+        techName: `${tech.first_name} ${tech.last_name}`,
+        roomName: `support-${tech.id}-${Date.now()}`,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      setVideoToken(res.data.token);
+      setVideoRoom(res.data.roomName);
+      setScreen('video');
+    } catch (err) {
+      alert('Failed to start support call. Please try again.');
+    }
+  };
 
   // Lifted form state for the check-in / diagnosis / gate1 screens.
   // Living here (in App) instead of inside each screen component means
@@ -2023,6 +2095,36 @@ export default function App() {
       {screen === 'submitted' && selectedJob && <SubmittedScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} gate1Data={gate1Data} onNext={handleSubmittedNext} lang={lang} />}
       {screen === 'video' && selectedJob && videoToken && <VideoCallScreen job={selectedJob} token={videoToken} roomName={videoRoom} onBack={() => setScreen('detail')} lang={lang} />}
       {screen === 'tasks' && <TaskScreen token={token} lang={lang} onBack={() => setScreen('list')} />}
+      {show911Confirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '24px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px 24px', width: '100%', maxWidth: '380px', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: '12px' }}>🚨</div>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: '#ef4444', marginBottom: '8px' }}>Call 911?</div>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px', lineHeight: '1.5' }}>This will open your phone dialer to call emergency services.</div>
+            <a href="tel:911" style={{ display: 'block', backgroundColor: '#ef4444', color: 'white', borderRadius: '10px', padding: '14px', fontSize: '16px', fontWeight: '700', textDecoration: 'none', marginBottom: '12px' }} onClick={() => setShow911Confirm(false)}>
+              Yes, Call 911
+            </a>
+            <button onClick={() => setShow911Confirm(false)} style={{ width: '100%', backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      {showSupportUnavailable && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '24px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px 24px', width: '100%', maxWidth: '380px', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: '12px' }}>🕐</div>
+            <div style={{ fontSize: '18px', fontWeight: '800', color: '#1B3A6B', marginBottom: '12px' }}>Support Unavailable</div>
+            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '28px', lineHeight: '1.6' }}>Support is unavailable right now. Hours are M-F 7am-7pm and Sat 9am-5pm. For emergencies call 911.</div>
+            <button onClick={() => { setShowSupportUnavailable(false); setShow911Confirm(true); }} style={{ width: '100%', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', marginBottom: '10px' }}>
+              🚨 Call 911
+            </button>
+            <button onClick={() => setShowSupportUnavailable(false)} style={{ width: '100%', backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '12px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
