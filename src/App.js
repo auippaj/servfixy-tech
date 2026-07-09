@@ -324,7 +324,7 @@ function LoginScreen({ onLogin, lang, setLang }) {
   );
 }
 
-function JobList({ tech, token, onSelectJob, lang }) {
+function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
   const t = STRINGS[lang];
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1898,8 +1898,6 @@ export default function App() {
       alert('Failed to start support call. Please try again.');
     }
   };
-  const [show911Confirm, setShow911Confirm] = useState(false);
-  const [showSupportUnavailable, setShowSupportUnavailable] = useState(false);
 
   const handleSupportCall = () => {
     const now = new Date();
@@ -1917,21 +1915,6 @@ export default function App() {
     }
   };
 
-  const handleSupportVideoCall = async () => {
-    try {
-      const res = await axios.post(`${API}/video/token`, {
-        serviceRequestId: null,
-        techId: tech.id,
-        techName: `${tech.first_name} ${tech.last_name}`,
-        roomName: `support-${tech.id}-${Date.now()}`,
-      }, { headers: { Authorization: `Bearer ${token}` } });
-      setVideoToken(res.data.token);
-      setVideoRoom(res.data.roomName);
-      setScreen('video');
-    } catch (err) {
-      alert('Failed to start support call. Please try again.');
-    }
-  };
 
   // Lifted form state for the check-in / diagnosis / gate1 screens.
   // Living here (in App) instead of inside each screen component means
@@ -2071,11 +2054,11 @@ export default function App() {
         </div>
       )}
       {screen === 'list' && <div onClick={() => setScreen('tasks')} style={{ backgroundColor: '#14B8A6', color: 'white', padding: '14px 16px', margin: '12px 16px 0', borderRadius: '10px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🧪 Rounds & Tasks</span><span>→</span></div>}
-      {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} />}
+      {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
       {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={handleBeginCheckIn} onVideoCall={handleVideoCall} lang={lang} />}
-      {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} state={checkInState} setState={updateCheckInState} />}
-      {screen === 'diagnosis' && selectedJob && <DiagnosisScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} onComplete={handleDiagnosisComplete} onBack={() => setScreen('checkin')} lang={lang} onVideoCall={handleVideoCall} checkedIn={selectedJob.tech_checked_in} state={diagnosisState} setState={updateDiagnosisState} />}
-      {screen === 'gate1' && selectedJob && <Gate1Screen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} onComplete={handleGate1Complete} onBack={() => setScreen('diagnosis')} lang={lang} ppeConfirmed={checkInData?.ppeConfirmed} state={gate1State} setState={updateGate1State} />}
+      {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} state={checkInState} setState={updateCheckInState} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
+      {screen === 'diagnosis' && selectedJob && <DiagnosisScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} onComplete={handleDiagnosisComplete} onBack={() => setScreen('checkin')} lang={lang} onVideoCall={handleVideoCall} checkedIn={selectedJob.tech_checked_in} state={diagnosisState} setState={updateDiagnosisState} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
+      {screen === 'gate1' && selectedJob && <Gate1Screen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} onComplete={handleGate1Complete} onBack={() => setScreen('diagnosis')} lang={lang} ppeConfirmed={checkInData?.ppeConfirmed} state={gate1State} setState={updateGate1State} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
       {screen === 'submitted' && selectedJob && <SubmittedScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} gate1Data={gate1Data} onNext={handleSubmittedNext} lang={lang} />}
       {screen === 'video' && selectedJob && videoToken && <VideoCallScreen job={selectedJob} token={videoToken} roomName={videoRoom} onBack={() => setScreen('detail')} lang={lang} />}
       {screen === 'tasks' && <TaskScreen token={token} lang={lang} onBack={() => setScreen('list')} />}
