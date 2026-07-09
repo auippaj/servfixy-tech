@@ -399,9 +399,9 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
         );
       })}
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-        <button onClick={() => setShow911Confirm(true)} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
+        <button onClick={onShow911} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
         <span style={{ backgroundColor: '#14B8A6', padding: '3px 10px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
-        <button onClick={handleSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
+        <button onClick={onSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
       </div>
     </div>
   );
@@ -415,7 +415,7 @@ function generateRVC(jobId) {
 // ── CheckInScreen ──
 // State is now lifted to App and passed in as `state` + `setState`.
 // `setState` merges partial updates, e.g. setState({ step: 'rvc' }).
-function CheckInScreen({ job, tech, token, onComplete, onBack, lang, state, setState }) {
+function CheckInScreen({  job, tech, token, onComplete, onBack, lang, state, setState , onShow911, onSupportCall }) {
   const t = STRINGS[lang];
   const {
     step, gpsStatus, gpsCoords, photos, touch3Fired, showRvcPicker, rvcMethod,
@@ -838,9 +838,9 @@ const handleHvacAnalysis = async () => {
       )}
 
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-        <button onClick={() => setShow911Confirm(true)} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
+        <button onClick={onShow911} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
         <span style={{ backgroundColor: '#14B8A6', padding: '3px 10px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
-        <button onClick={handleSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
+        <button onClick={onSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
       </div>
     </div>
   );
@@ -848,7 +848,7 @@ const handleHvacAnalysis = async () => {
 
 // ── DiagnosisScreen ──
 // State is now lifted to App and passed in as `state` + `setState`.
-function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, lang, onVideoCall, checkedIn, state, setState }) {
+function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, lang, onVideoCall, checkedIn, state, setState , onShow911, onSupportCall }) {
   const t = STRINGS[lang];
   const {
     mode, system, category, cause, diagnosis, parts, newPart,
@@ -1139,9 +1139,9 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
       </div>
 
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-        <button onClick={() => setShow911Confirm(true)} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
+        <button onClick={onShow911} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
         <span style={{ backgroundColor: '#14B8A6', padding: '3px 10px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
-        <button onClick={handleSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
+        <button onClick={onSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
       </div>
     </div>
   );
@@ -1159,7 +1159,7 @@ function DiagnosisScreen({ job, tech, token, checkInData, onComplete, onBack, la
 // survives back-navigation. `checked` starts as null in initial state;
 // we lazily initialize it to the correct array the first time this screen
 // mounts for a given job.
-function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBack, lang, ppeConfirmed, state, setState }) {
+function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onBack, lang, ppeConfirmed, state, setState , onShow911, onSupportCall }) {
   const t = STRINGS[lang];
   const isDeferred = diagData?.mode === 'deferred';
 
@@ -1362,9 +1362,9 @@ function Gate1Screen({ job, tech, token, checkInData, diagData, onComplete, onBa
       </div>
 
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-        <button onClick={() => setShow911Confirm(true)} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
+        <button onClick={onShow911} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
         <span style={{ backgroundColor: '#14B8A6', padding: '3px 10px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
-        <button onClick={handleSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
+        <button onClick={onSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
       </div>
     </div>
   );
