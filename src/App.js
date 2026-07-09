@@ -4,7 +4,7 @@ import TaskScreen from './TaskScreen';
 
 const API = 'https://servfixy-production.up.railway.app/api';
 
-const statusColor = { pending: '#6b7280', assigned: '#3b82f6', in_progress: '#f97316', completed: '#22c55e' };
+const statusColor = { pending_triage: '#1e3a5f', dispatched: '#3b82f6', scheduled: '#14B8A6', in_progress: '#f97316', pending_qa: '#7c3aed', completed: '#22c55e' };
 const tierColor = { T1: '#ef4444', T2: '#f97316', T3: '#3b82f6', T4: '#a855f7' };
 const tierLabel = { T1: 'Tier 1 - Emergency', T2: 'Tier 2 - Urgent', T3: 'Tier 3 - Routine', T4: 'Tier 4 - Cosmetic' };
 const tierLabelEs = { T1: 'Nivel 1 - Emergencia', T2: 'Nivel 2 - Urgente', T3: 'Nivel 3 - Rutina', T4: 'Nivel 4 - Cosmetico' };
@@ -384,7 +384,7 @@ function JobList({ tech, token, onSelectJob, lang }) {
               <span style={{ backgroundColor: statusColor[job.status] || '#6b7280', color: 'white', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
                 {lang === 'es' ? ({ in_progress: 'En progreso', pending: 'Pendiente', assigned: 'Asignado', completed: 'Completado' }[job.status] || job.status) : job.status?.replace('_', ' ')}
               </span>
-              {(job.status === 'assigned' || job.status === 'scheduled') && (
+              {(job.status === 'dispatched' || job.status === 'scheduled') && (
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }} onClick={e => handleAccept(e, job.id)} disabled={actionLoading === job.id + '_accept'}>
                     {actionLoading === job.id + '_accept' ? '...' : t.accept}
@@ -1467,7 +1467,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
         </button>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <span style={{ fontWeight: '700', color: '#1B3A6B' }}>
-            {(() => { const scheduled = ['assigned','in_progress','submitted','completed']; const prefix = scheduled.includes(job.status) ? 'SO' : 'SR'; const num = job.ticket_number ? String(job.ticket_number).padStart(4,'0') : '????'; return `${prefix}-${num}`; })()}
+            {(() => { const scheduled = ['dispatched','scheduled','in_progress','pending_qa','completed']; const prefix = scheduled.includes(job.status) ? 'SO' : 'SR'; const num = job.ticket_number ? String(job.ticket_number).padStart(4,'0') : '????'; return `${prefix}-${num}`; })()}
           </span>
           <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '700' }}>{tLabel}</span>
         </div>
@@ -1523,7 +1523,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
           {lang === 'es' ? ({ in_progress: 'En progreso', pending: 'Pendiente', assigned: 'Asignado', completed: 'Completado' }[job.status] || job.status) : job.status?.replace('_', ' ')}
         </span>
       </div>
-      {(job.status === 'in_progress' || job.status === 'assigned' || job.status === 'scheduled') && (
+      {(job.status === 'in_progress' || job.status === 'dispatched' || job.status === 'scheduled') && (
         <div style={{ backgroundColor: '#1B3A6B', borderRadius: '10px', padding: '20px', margin: '0 12px 12px', boxShadow: '0 2px 8px rgba(27,58,107,0.25)' }}>
           <div style={{ color: 'white', fontWeight: '700', fontSize: '15px', marginBottom: '4px' }}>{t.readyToStart}</div>
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', marginBottom: '16px' }}>{t.checkInRequired}</div>
@@ -1535,7 +1535,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
         <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>{t.addNote}</div>
         <textarea style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', marginBottom: '16px', height: '80px', resize: 'none' }} placeholder={t.notesPlaceholder} value={note} onChange={e => setNote(e.target.value)} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {(job.status === 'assigned' || job.status === 'scheduled') && (
+          {(job.status === 'dispatched' || job.status === 'scheduled') && (
             <button style={{ backgroundColor: '#f97316', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }} onClick={() => updateStatus('in_progress')} disabled={loading}>{t.markEnRoute}</button>
           )}
           {job.status === 'completed' && <div style={{ textAlign: 'center', color: '#22c55e', fontWeight: '600' }}>{t.jobComplete}</div>}
@@ -1752,7 +1752,7 @@ function AdminDashboard({ tech, token, onLogout, lang, setLang }) {
             <div key={job.id} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', marginBottom: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', borderLeft: `4px solid ${tierColor[tier]}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
                 <span style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '13px' }}>
-                  {(() => { const scheduled = ['assigned','in_progress','submitted','completed']; const prefix = scheduled.includes(job.status) ? 'SO' : 'SR'; const num = job.ticket_number ? String(job.ticket_number).padStart(4,'0') : '????'; return `${prefix}-${num}`; })()}
+                  {(() => { const scheduled = ['dispatched','scheduled','in_progress','pending_qa','completed']; const prefix = scheduled.includes(job.status) ? 'SO' : 'SR'; const num = job.ticket_number ? String(job.ticket_number).padStart(4,'0') : '????'; return `${prefix}-${num}`; })()}
                 </span>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: '700' }}>{tier}</span>
@@ -1882,22 +1882,6 @@ export default function App() {
   const [lang, setLang] = useState(() => localStorage.getItem('techLang') || 'en');
   const [show911Confirm, setShow911Confirm] = useState(false);
   const [showSupportUnavailable, setShowSupportUnavailable] = useState(false);
-
-  const handleSupportCall = () => {
-    const now = new Date();
-    const day = now.getDay();
-    const hour = now.getHours();
-    const minute = now.getMinutes();
-    const timeVal = hour * 60 + minute;
-    const monFri = day >= 1 && day <= 5;
-    const sat = day === 6;
-    const inHours = (monFri && timeVal >= 420 && timeVal < 1140) || (sat && timeVal >= 540 && timeVal < 1020);
-    if (inHours) {
-      handleSupportVideoCall();
-    } else {
-      setShowSupportUnavailable(true);
-    }
-  };
 
   const handleSupportVideoCall = async () => {
     try {
