@@ -353,7 +353,7 @@ function JobList({ tech, token, onSelectJob, lang }) {
     e.stopPropagation();
     setActionLoading(jobId + '_decline');
     try {
-      await axios.patch(`${API}/service-requests/${jobId}/status`, { status: 'pending' }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.patch(`${API}/service-requests/${jobId}/status`, { status: 'pending_triage' }, { headers: { Authorization: `Bearer ${token}` } });
       setJobs(prev => prev.filter(j => j.id !== jobId));
     } catch { alert(t.failDecline); }
     setActionLoading(null);
@@ -1691,7 +1691,7 @@ function AdminDashboard({ tech, token, onLogout, lang, setLang }) {
   };
 
   const tierColor = { T1: '#ef4444', T2: '#f97316', T3: '#3b82f6', T4: '#a855f7' };
-  const statusColor = { pending: '#6b7280', assigned: '#3b82f6', in_progress: '#f97316', completed: '#22c55e', scheduled: '#14B8A6' };
+  const statusColor = { pending_triage: '#1e3a5f', dispatched: '#3b82f6', scheduled: '#14B8A6', in_progress: '#f97316', pending_qa: '#7c3aed', completed: '#22c55e' };
 
   const getTier = (job) => {
     if (job.priority === 'urgent') return 'T1';
