@@ -3,8 +3,6 @@ import axios from 'axios';
 
 const API = 'https://servfixy-production.up.railway.app/api';
 
-// Pilot is single-property (Brant Rock). When multi-property field staff come
-// online, pass propertyId in as a prop instead of relying on this default.
 const DEFAULT_PROPERTY_ID = 'f0131587-a6b3-4a45-b13c-1d79a0db6459';
 
 const NAVY = '#1B3A6B';
@@ -14,19 +12,25 @@ const T = {
   en: {
     rounds: 'Rounds & Tasks', back: 'Back', overdue: 'Overdue', today: 'Today',
     upcoming: 'Upcoming', completed: 'Completed', none: 'No tasks scheduled.',
-    loading: 'Loading tasks...', due: 'Due', log: 'Log Reading',
-    submit: 'Submit Reading', submitting: 'Submitting...', enterAll: 'Please enter all readings.',
-    pass: 'All readings within range', flag: 'Out of range', done: 'Done',
-    loadErr: 'Could not load tasks.', submitErr: 'Could not submit. Please try again.',
+    loading: 'Loading tasks...', due: 'Due', log: 'Log Reading', inspect: 'Start Inspection',
+    submit: 'Submit Reading', submitInspect: 'Submit Inspection', submitting: 'Submitting...',
+    enterAll: 'Please enter all readings.', markAll: 'Please mark every item (Pass, Fail, or N/A).',
+    pass: 'All readings within range', flag: 'Out of range',
+    passInspect: 'All items passed', failInspect: 'item(s) failed', ordersMade: 'Work orders created',
+    ticket: 'Ticket', pPass: 'Pass', pFail: 'Fail', pNa: 'N/A', note: 'Note (what / where)',
+    done: 'Done', loadErr: 'Could not load tasks.', submitErr: 'Could not submit. Please try again.',
     cancel: 'Cancel'
   },
   es: {
     rounds: 'Rondas y Tareas', back: 'Atras', overdue: 'Atrasado', today: 'Hoy',
     upcoming: 'Proximo', completed: 'Completado', none: 'No hay tareas programadas.',
-    loading: 'Cargando tareas...', due: 'Vence', log: 'Registrar Lectura',
-    submit: 'Enviar Lectura', submitting: 'Enviando...', enterAll: 'Por favor ingrese todas las lecturas.',
-    pass: 'Todas las lecturas en rango', flag: 'Fuera de rango', done: 'Listo',
-    loadErr: 'No se pudieron cargar las tareas.', submitErr: 'No se pudo enviar. Intente de nuevo.',
+    loading: 'Cargando tareas...', due: 'Vence', log: 'Registrar Lectura', inspect: 'Iniciar Inspeccion',
+    submit: 'Enviar Lectura', submitInspect: 'Enviar Inspeccion', submitting: 'Enviando...',
+    enterAll: 'Por favor ingrese todas las lecturas.', markAll: 'Por favor marque cada elemento (Pasa, Falla, o N/A).',
+    pass: 'Todas las lecturas en rango', flag: 'Fuera de rango',
+    passInspect: 'Todos los elementos pasaron', failInspect: 'elemento(s) fallaron', ordersMade: 'Ordenes de trabajo creadas',
+    ticket: 'Boleto', pPass: 'Pasa', pFail: 'Falla', pNa: 'N/A', note: 'Nota (que / donde)',
+    done: 'Listo', loadErr: 'No se pudieron cargar las tareas.', submitErr: 'No se pudo enviar. Intente de nuevo.',
     cancel: 'Cancelar'
   }
 };
@@ -39,6 +43,23 @@ const POOL_FIELDS = [
   { key: 'cya', en: 'Cyanuric Acid (ppm)',     es: 'Acido Cianurico (ppm)',  step: '1' },
   { key: 'temp', en: 'Water Temp (F)',         es: 'Temp. del Agua (F)',     step: '1' }
 ];
+
+// Monthly life-safety walkthrough checklist. `label` (en) is the canonical
+// value stored in result_data and used in the auto-created work order title.
+const LIFE_SAFETY_ITEMS = [
+  { key: 'extinguishers',   en: 'Fire extinguishers (present, mounted, gauge green, pin/seal, tag)', es: 'Extintores (presentes, montados, aguja verde, pin/sello, etiqueta)' },
+  { key: 'exit_signs',      en: 'Exit signs illuminated and undamaged',        es: 'Senales de salida iluminadas y sin danos' },
+  { key: 'emergency_light', en: 'Emergency lighting functional (test button)', es: 'Luz de emergencia funcional (boton de prueba)' },
+  { key: 'egress',          en: 'Egress paths and stairwells clear',           es: 'Rutas de salida y escaleras despejadas' },
+  { key: 'fire_doors',      en: 'Fire doors close and latch, not propped',     es: 'Puertas cortafuego cierran y aseguran, no trabadas' },
+  { key: 'pull_stations',   en: 'Fire alarm pull stations visible',            es: 'Estaciones de alarma visibles' },
+  { key: 'detectors',       en: 'Common-area smoke / CO detectors present',    es: 'Detectores de humo / CO en areas comunes presentes' },
+  { key: 'building_numbers', en: 'Building / unit numbers visible',            es: 'Numeros de edificio / unidad visibles' }
+];
+
+function isInspection(task) {
+  return !!task && (task.task_type === 'inspection' || task.template_key === 'life-safety');
+}
 
 function dateOnly(d) {
   if (!d) return '';
@@ -59,7 +80,6 @@ function friendlyDate(d) {
   return `${parts[1]}/${parts[2]}/${parts[0]}`;
 }
 
-// Best-effort GPS; never blocks submission if unavailable or denied.
 function getGps() {
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve({ lat: null, lng: null });
@@ -79,9 +99,10 @@ export default function TaskScreen({ token, lang = 'en', onBack, propertyId = DE
   const [error, setError] = useState('');
 
   const [selectedTask, setSelectedTask] = useState(null);
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState({});          // pool: {fc,...} | inspection: {key:{result,note}}
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null); // completed instance after submit
+  const [result, setResult] = useState(null);
+  const [failsSubmitted, setFailsSubmitted] = useState([]); // labels, ordered to match created_tickets
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
@@ -105,6 +126,7 @@ export default function TaskScreen({ token, lang = 'en', onBack, propertyId = DE
     setSelectedTask(task);
     setForm({});
     setResult(null);
+    setFailsSubmitted([]);
     setError('');
   };
 
@@ -112,12 +134,15 @@ export default function TaskScreen({ token, lang = 'en', onBack, propertyId = DE
     setSelectedTask(null);
     setForm({});
     setResult(null);
+    setFailsSubmitted([]);
   };
 
-  const handleSubmit = async () => {
+  const setItem = (key, patch) =>
+    setForm((prev) => ({ ...prev, [key]: { ...(prev[key] || {}), ...patch } }));
+
+  const handleSubmitPool = async () => {
     const filled = POOL_FIELDS.every((f) => form[f.key] !== undefined && form[f.key] !== '');
     if (!filled) { setError(t.enterAll); return; }
-
     setSubmitting(true);
     setError('');
     try {
@@ -138,7 +163,35 @@ export default function TaskScreen({ token, lang = 'en', onBack, propertyId = DE
     }
   };
 
-  // ---- grouping ----
+  const handleSubmitInspection = async () => {
+    const allMarked = LIFE_SAFETY_ITEMS.every((i) => form[i.key] && form[i.key].result);
+    if (!allMarked) { setError(t.markAll); return; }
+    setSubmitting(true);
+    setError('');
+    try {
+      const gps = await getGps();
+      const items = LIFE_SAFETY_ITEMS.map((i) => ({
+        key: i.key,
+        label: i.en,
+        result: form[i.key].result,
+        note: (form[i.key].note || '').trim(),
+        photo_url: ''
+      }));
+      setFailsSubmitted(items.filter((it) => it.result === 'fail').map((it) => it.label));
+      const res = await axios.post(
+        `${API}/tasks/${selectedTask.id}/complete`,
+        { result_data: { items }, gps_lat: gps.lat, gps_lng: gps.lng },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setResult(res.data);
+      await loadTasks();
+    } catch (e) {
+      setError(t.submitErr);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const today = todayStr();
   const pending = tasks.filter((x) => x.status === 'pending' || x.status === 'in_progress');
   const overdue = pending.filter((x) => dateOnly(x.due_date) < today);
@@ -150,6 +203,7 @@ export default function TaskScreen({ token, lang = 'en', onBack, propertyId = DE
 
   // ================= FORM VIEW =================
   if (selectedTask) {
+    const inspection = isInspection(selectedTask);
     return (
       <div style={wrap}>
         <button onClick={closeTask} style={backBtn}>&larr; {t.cancel}</button>
@@ -160,7 +214,8 @@ export default function TaskScreen({ token, lang = 'en', onBack, propertyId = DE
           {t.due}: {friendlyDate(selectedTask.due_date)}{selectedTask.due_time ? ` @ ${selectedTask.due_time.slice(0, 5)}` : ''}
         </div>
 
-        {!result && POOL_FIELDS.map((f) => (
+        {/* ---- POOL FORM ---- */}
+        {!result && !inspection && POOL_FIELDS.map((f) => (
           <div key={f.key} style={{ marginBottom: '12px' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
               {f[lang] || f.en}
@@ -176,15 +231,63 @@ export default function TaskScreen({ token, lang = 'en', onBack, propertyId = DE
           </div>
         ))}
 
+        {/* ---- INSPECTION CHECKLIST ---- */}
+        {!result && inspection && LIFE_SAFETY_ITEMS.map((item) => {
+          const state = form[item.key] || {};
+          return (
+            <div key={item.key} style={{ marginBottom: '14px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '10px', backgroundColor: 'white' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+                {item[lang] || item.en}
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {[['pass', t.pPass, '#15803d', '#f0fdf4', '#86efac'],
+                  ['fail', t.pFail, '#b91c1c', '#fef2f2', '#fca5a5'],
+                  ['na',   t.pNa,   '#6b7280', '#f3f4f6', '#d1d5db']].map(([val, label, fg, bg, br]) => {
+                  const on = state.result === val;
+                  return (
+                    <button
+                      key={val}
+                      onClick={() => setItem(item.key, { result: val })}
+                      style={{
+                        flex: 1, padding: '10px 0', fontSize: '13px', fontWeight: 700,
+                        borderRadius: '8px', cursor: 'pointer',
+                        color: on ? fg : '#6b7280',
+                        backgroundColor: on ? bg : 'white',
+                        border: `1px solid ${on ? br : '#d1d5db'}`
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {state.result === 'fail' && (
+                <input
+                  type="text"
+                  placeholder={t.note}
+                  value={state.note || ''}
+                  onChange={(e) => setItem(item.key, { note: e.target.value })}
+                  style={{ width: '100%', marginTop: '8px', padding: '10px', fontSize: '15px', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box' }}
+                />
+              )}
+            </div>
+          );
+        })}
+
         {error && <div style={{ color: '#dc2626', fontSize: '13px', margin: '8px 0' }}>{error}</div>}
 
         {!result && (
-          <button onClick={handleSubmit} disabled={submitting} style={{ ...primaryBtn, opacity: submitting ? 0.6 : 1 }}>
-            {submitting ? t.submitting : t.submit}
+          <button
+            onClick={inspection ? handleSubmitInspection : handleSubmitPool}
+            disabled={submitting}
+            style={{ ...primaryBtn, opacity: submitting ? 0.6 : 1 }}
+          >
+            {submitting ? t.submitting : (inspection ? t.submitInspect : t.submit)}
           </button>
         )}
 
-        {result && (
+        {/* ---- RESULT ---- */}
+        {result && !inspection && (
           <div style={{ marginTop: '8px' }}>
             <div style={{
               padding: '16px', borderRadius: '10px', textAlign: 'center',
@@ -197,6 +300,32 @@ export default function TaskScreen({ token, lang = 'en', onBack, propertyId = DE
               </div>
               {result.flagged && result.flag_reason && (
                 <div style={{ fontSize: '13px', color: '#b91c1c', marginTop: '6px' }}>{result.flag_reason}</div>
+              )}
+            </div>
+            <button onClick={closeTask} style={{ ...primaryBtn, marginTop: '14px' }}>{t.done}</button>
+          </div>
+        )}
+
+        {result && inspection && (
+          <div style={{ marginTop: '8px' }}>
+            <div style={{
+              padding: '16px', borderRadius: '10px', textAlign: 'center',
+              backgroundColor: result.flagged ? '#fef2f2' : '#f0fdf4',
+              border: `1px solid ${result.flagged ? '#fca5a5' : '#86efac'}`
+            }}>
+              <div style={{ fontSize: '28px' }}>{result.flagged ? '\u26A0\uFE0F' : '\u2705'}</div>
+              <div style={{ fontWeight: 700, color: result.flagged ? '#b91c1c' : '#15803d', marginTop: '4px' }}>
+                {result.flagged ? `${failsSubmitted.length} ${t.failInspect}` : t.passInspect}
+              </div>
+              {result.flagged && Array.isArray(result.created_tickets) && result.created_tickets.length > 0 && (
+                <div style={{ marginTop: '10px', textAlign: 'left' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#b91c1c', marginBottom: '4px' }}>{t.ordersMade}:</div>
+                  {result.created_tickets.map((tk, idx) => (
+                    <div key={tk.id} style={{ fontSize: '13px', color: '#b91c1c' }}>
+                      {t.ticket} #{tk.ticket_number} — {failsSubmitted[idx] || ''}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
             <button onClick={closeTask} style={{ ...primaryBtn, marginTop: '14px' }}>{t.done}</button>
@@ -247,6 +376,7 @@ function TaskGroup({ label, color, items, onOpen, t, done }) {
 
 function TaskCard({ item, onOpen, t, done }) {
   const clickable = !done && (item.status === 'pending' || item.status === 'in_progress');
+  const cta = isInspection(item) ? t.inspect : t.log;
   return (
     <div
       onClick={clickable ? () => onOpen(item) : undefined}
@@ -269,7 +399,7 @@ function TaskCard({ item, onOpen, t, done }) {
       </div>
       {done
         ? <span style={{ fontSize: '18px' }}>{item.flagged ? '\u26A0\uFE0F' : '\u2705'}</span>
-        : <span style={{ fontSize: '13px', fontWeight: 600, color: TEAL }}>{t.log} &rarr;</span>}
+        : <span style={{ fontSize: '13px', fontWeight: 600, color: TEAL }}>{cta} &rarr;</span>}
     </div>
   );
 }

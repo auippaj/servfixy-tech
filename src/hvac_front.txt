@@ -1,0 +1,60 @@
+﻿        };
+        const getStatus = (val, type) => {
+          if (val === null || !refrigerantType) return null;
+          const range = RANGES[refrigerantType]?.[type]?.[expansionValve];
+          if (!range) return null;
+          const [lo, hi] = range;
+          if (val >= lo && val <= hi) return 'green';
+          if (val >= lo - 2 && val <= hi + 2) return 'yellow';
+          return 'red';
+        };
+        const shStatus = getStatus(superheat, 'superheat');
+        const scStatus = getStatus(subcool, 'subcool');
+        const statusStyle = (s) => s === 'green' ? { bg: '#f0fdf4', border: '#22c55e', text: '#15803d', icon: 'ðŸŸ¢' } : s === 'yellow' ? { bg: '#fefce8', border: '#fbbf24', text: '#92400e', icon: 'ðŸŸ¡' } : { bg: '#fef2f2', border: '#ef4444', text: '#dc2626', icon: 'ðŸ”´' };
+        const canContinue = refrigerantType && hvacLow && hvacHigh && suctionTemp && liquidTemp;
+
+const handleHvacAnalysis = async () => {
+  setState({ hvacAnalysisLoading: true });
+  try {
+    const res = await axios.post(`${API}/service-requests/${job.id}/hvac-analysis`, {
+      hvac_low_side_psi: hvacLow,
+      hvac_high_side_psi: hvacHigh,
+      refrigerant_type: refrigerantType,
+      expansion_valve_type: expansionValve,
+      suction_line_temp: suctionTemp,
+      liquid_line_temp: liquidTemp,
+      superheat_result: superheat !== null ? superheat.toFixed(1) : null,
+      subcool_result: subcool !== null ? subcool.toFixed(1) : null,
+      triage_assessment: job.triage_assessment || null,
+    }, { headers: { Authorization: `Bearer ${token}` } });
+    setState({ hvacAnalysis: res.data, hvacAnalysisLoading: false });
+  } catch (err) {
+    setState({ hvacAnalysis: { likely_issue: 'Analysis unavailable', confidence: 'Low', next_step: 'Proceed with manual diagnosis' }, hvacAnalysisLoading: false });
+  }
+};
+        return (
+          <div style={{ padding: '16px' }}>
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '12px' }}>
+              <div style={{ fontSize: '24px', textAlign: 'center', marginBottom: '8px' }}>ðŸŒ¡ï¸</div>
+              <div style={{ fontSize: '17px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px', textAlign: 'center' }}>{lang === 'es' ? 'Diagnostico HVAC' : 'HVAC Diagnostics'}</div>
+              <div style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', marginBottom: '20px' }}>{lang === 'es' ? 'Conecta manometros y registra lecturas' : 'Connect gauges and record all readings'}</div>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de refrigerante' : 'Refrigerant Type'} <span style={{ color: '#ef4444' }}>*</span></label>
+                <select value={refrigerantType} onChange={e => setState({ refrigerantType: e.target.value })} style={{ width: '100%', padding: '12px', border: `2px solid ${refrigerantType ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '15px', fontWeight: '700', color: '#1B3A6B', backgroundColor: 'white', boxSizing: 'border-box' }}>
+                  <option value="">{lang === 'es' ? 'Seleccionar refrigerante...' : 'Select refrigerant...'}</option>
+                  {['R-22', 'R-410A', 'R-32', 'R-454B', 'R-407C', 'R-134a'].map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de valvula' : 'Expansion Valve'}</label>
+                <div style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e5e7eb' }}>
+                  {['TXV', 'Fixed Orifice'].map(v => (
+                    <button key={v} onClick={() => setState({ expansionValve: v })} style={{ flex: 1, padding: '10px', border: 'none', cursor: 'pointer', backgroundColor: expansionValve === v ? '#1B3A6B' : '#f9fafb', color: expansionValve === v ? 'white' : '#6b7280', fontWeight: '700', fontSize: '13px' }}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>{lang === 'es' ? 'TXV es el predeterminado â€” cambia si la unidad usa orificio fijo' : 'TXV is default â€” change if unit uses fixed orifice'}</div>
+              </div>
+              <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginBottom: '8px' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ðŸ”µ {lang === 'es' ? 'Lado bajo (succion)' : 'Low Side (Suction)'}</div>
