@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import TaskScreen from './TaskScreen';
-
+import WalkScreen from './WalkScreen';
 const API = 'https://servfixy-production.up.railway.app/api';
 
 const statusColor = { pending_triage: '#1e3a5f', dispatched: '#3b82f6', scheduled: '#14B8A6', in_progress: '#f97316', pending_qa: '#7c3aed', completed: '#22c55e' };
@@ -1874,6 +1874,8 @@ export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('techToken') || '');
   const [selectedJob, setSelectedJob] = useState(null);
   const [screen, setScreen] = useState('list');
+  const [selectedTurn, setSelectedTurn] = useState(null);
+  const [walkType, setWalkType] = useState('notice');
   const [checkInData, setCheckInData] = useState(null);
   const [diagData, setDiagData] = useState(null);
   const [gate1Data, setGate1Data] = useState(null);
@@ -1993,6 +1995,10 @@ export default function App() {
     }
     setScreen('submitted');
   };
+  const handleWalkComplete = (result) => {
+    console.log('Walk complete:', result);
+    setScreen('list');
+  };
   const handleSubmittedNext = () => {
     setScreen('list');
     setSelectedJob(null);
@@ -2062,7 +2068,9 @@ export default function App() {
       {screen === 'submitted' && selectedJob && <SubmittedScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} gate1Data={gate1Data} onNext={handleSubmittedNext} lang={lang} />}
       {screen === 'video' && selectedJob && videoToken && <VideoCallScreen job={selectedJob} token={videoToken} roomName={videoRoom} onBack={() => setScreen('detail')} lang={lang} />}
       {screen === 'tasks' && <TaskScreen token={token} lang={lang} onBack={() => setScreen('list')} />}
+        {screen === 'turn_walk' && selectedTurn && <WalkScreen turn={selectedTurn} walkType={walkType} tech={tech} token={token} onBack={() => setScreen('list')} onComplete={handleWalkComplete} />}
       {show911Confirm && (
+        
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '24px' }}>
           <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px 24px', width: '100%', maxWidth: '380px', textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>🚨</div>
