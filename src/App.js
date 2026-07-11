@@ -406,7 +406,73 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
     </div>
   );
 }
-
+function TurnWalkList({ tech, token, lang, onBack, onStartWalk }) {
+  const [turns, setTurns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(null);
+  const PROPERTY_ID = 'f0131587-a6b3-4a45-b13c-1d79a0db6459';
+  useEffect(() => {
+    axios.get(`${API}/turns?property_id=${PROPERTY_ID}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setTurns((res.data || []).filter(t => t.status !== 'certified_ready')))
+      .catch(() => setTurns([]))
+      .finally(() => setLoading(false));
+  }, [token]);
+  const handleStart = async (turn, walkType) => {
+    setStarting(turn.id + '_' + walkType);
+    try {
+      await axios.post(`${API}/turns/${turn.id}/walks`, { walk_type: walkType, walked_by: tech.id }, { headers: { Authorization: `Bearer ${token}` } });
+    } catch (e) {
+      if (!e.response || e.response.status !== 409) {
+        alert('Could not start walk. Try again.');
+        setStarting(null);
+        return;
+      }
+    }
+    setStarting(null);
+    onStartWalk(turn, walkType);
+  };
+  const statusLabel = { notice_received: 'Notice Received', walk_scheduled: 'Walk Scheduled', walk_complete: 'Walk Complete', scoped: 'Scoped', in_progress: 'In Progress', qa: 'QA', certified_ready: 'Certified Ready' };
+  const statusColor = { notice_received: '#6b7280', walk_scheduled: '#f59e0b', walk_complete: '#3b82f6', scoped: '#8b5cf6', in_progress: '#14B8A6', qa: '#f97316', certified_ready: '#22c55e' };
+  return (
+    <div style={{ paddingBottom: '80px', backgroundColor: '#f3f4f6', minHeight: '100vh' }}>
+      <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer', padding: '0' }}>←</button>
+        <span style={{ fontWeight: '700', fontSize: '17px' }}>Turn Walks</span>
+      </div>
+      {loading && <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>Loading turns...</div>}
+      {!loading && turns.length === 0 && (
+        <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '32px 16px', margin: '16px', textAlign: 'center', color: '#6b7280' }}>
+          <div style={{ fontSize: '32px', marginBottom: '8px' }}>🚪</div>
+          <div>No active turns assigned.</div>
+        </div>
+      )}
+      {turns.map(turn => (
+        <div key={turn.id} style={{ backgroundColor: 'white', borderRadius: '10px', margin: '12px', padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+            <span style={{ fontWeight: '700', fontSize: '16px', color: '#1B3A6B' }}>Unit {turn.unit_number}</span>
+            <span style={{ backgroundColor: statusColor[turn.status] || '#6b7280', color: 'white', padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700' }}>{statusLabel[turn.status] || turn.status}</span>
+          </div>
+          <div style={{ color: '#6b7280', fontSize: '13px', marginBottom: '4px' }}>{turn.floorplan_type || ''}</div>
+          {turn.projected_ready_date && <div style={{ color: '#6b7280', fontSize: '12px', marginBottom: '12px' }}>Projected ready: {new Date(turn.projected_ready_date).toLocaleDateString()}</div>}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <button
+              onClick={() => handleStart(turn, 'notice')}
+              disabled={!!starting}
+              style={{ flex: 1, backgroundColor: starting === turn.id + '_notice' ? '#9ca3af' : '#1B3A6B', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 8px', fontSize: '13px', fontWeight: '600', cursor: starting ? 'not-allowed' : 'pointer' }}>
+              {starting === turn.id + '_notice' ? '...' : 'Notice Walk'}
+            </button>
+            <button
+              onClick={() => handleStart(turn, 'move_out')}
+              disabled={!!starting}
+              style={{ flex: 1, backgroundColor: starting === turn.id + '_move_out' ? '#9ca3af' : '#14B8A6', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 8px', fontSize: '13px', fontWeight: '600', cursor: starting ? 'not-allowed' : 'pointer' }}>
+              {starting === turn.id + '_move_out' ? '...' : 'Move-Out Walk'}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 function generateRVC(jobId) {
   const suffix = jobId ? jobId.slice(0, 4).toUpperCase() : 'XXXX';
   return `SERV${suffix}`;
@@ -2060,6 +2126,7 @@ export default function App() {
         </div>
       )}
       {screen === 'list' && <div onClick={() => setScreen('tasks')} style={{ backgroundColor: '#14B8A6', color: 'white', padding: '14px 16px', margin: '12px 16px 0', borderRadius: '10px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🧪 Rounds & Tasks</span><span>→</span></div>}
+      {screen === 'list' && <div onClick={() => setScreen('turns')} style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '14px 16px', margin: '8px 16px 0', borderRadius: '10px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🚪 Turn Walks</span><span>→</span></div>}
       {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
       {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={handleBeginCheckIn} onVideoCall={handleVideoCall} lang={lang} />}
       {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} state={checkInState} setState={updateCheckInState} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
@@ -2068,6 +2135,7 @@ export default function App() {
       {screen === 'submitted' && selectedJob && <SubmittedScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} gate1Data={gate1Data} onNext={handleSubmittedNext} lang={lang} />}
       {screen === 'video' && selectedJob && videoToken && <VideoCallScreen job={selectedJob} token={videoToken} roomName={videoRoom} onBack={() => setScreen('detail')} lang={lang} />}
       {screen === 'tasks' && <TaskScreen token={token} lang={lang} onBack={() => setScreen('list')} />}
+      {screen === 'turns' && <TurnWalkList tech={tech} token={token} lang={lang} onBack={() => setScreen('list')} onStartWalk={(turn, walkType) => { setSelectedTurn(turn); setWalkType(walkType); setScreen('turn_walk'); }} />}
         {screen === 'turn_walk' && selectedTurn && <WalkScreen turn={selectedTurn} walkType={walkType} tech={tech} token={token} onBack={() => setScreen('list')} onComplete={handleWalkComplete} />}
       {show911Confirm && (
         
