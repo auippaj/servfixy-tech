@@ -183,7 +183,7 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
   const [allAssessments, setAllAssessments] = useState({});
   const [showSummary, setShowSummary] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [_error, setError] = useState('');
 
   const handleRoomNext = (assessments) => {
     setAllAssessments(prev => ({ ...prev, [rooms[roomIndex].key]: assessments }));

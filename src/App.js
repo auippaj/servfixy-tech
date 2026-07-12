@@ -426,12 +426,11 @@ function TurnWalkList({ tech, token, lang, onBack, onStartWalk }) {
       if (!e.response || e.response.status !== 409) {
         alert('Could not start walk. Try again.');
         setStarting(null);
-        return;
-      }
-    }
-    setStarting(null);
-    const fullTurn = await axios.get(`${API}/turns/${turn.id}`, { headers: { Authorization: `Bearer ${token}` } });
-    alert(JSON.stringify({ floorplan_rooms: fullTurn.data.floorplan_rooms, floorplan_type_id: fullTurn.data.floorplan_type_id })); onStartWalk(fullTurn.data, walkType);
+    try {
+      const fullTurnRes = await axios.get(`${API}/turns/${turn.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!fullTurnRes.data) { alert('Empty'); return; }
+      onStartWalk(fullTurnRes.data, walkType);
+    } catch (fe) { alert('Fetch error: ' + fe.message + ' ' + (fe.response && fe.response.status)); }
   };
   const statusLabel = { notice_received: 'Notice Received', walk_scheduled: 'Walk Scheduled', walk_complete: 'Walk Complete', scoped: 'Scoped', in_progress: 'In Progress', qa: 'QA', certified_ready: 'Certified Ready' };
   const statusColor = { notice_received: '#6b7280', walk_scheduled: '#f59e0b', walk_complete: '#3b82f6', scoped: '#8b5cf6', in_progress: '#14B8A6', qa: '#f97316', certified_ready: '#22c55e' };
