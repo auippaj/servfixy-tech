@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import TaskScreen from './TaskScreen';
 import WalkScreen from './WalkScreen';
+import TurnTaskScreen from "./TurnTaskScreen";
 const API = 'https://servfixy-production.up.railway.app/api';
 
 const statusColor = { pending_triage: '#1e3a5f', dispatched: '#3b82f6', scheduled: '#14B8A6', in_progress: '#f97316', pending_qa: '#7c3aed', completed: '#22c55e' };
@@ -429,7 +430,8 @@ function TurnWalkList({ tech, token, lang, onBack, onStartWalk }) {
       }
     }
     setStarting(null);
-    onStartWalk(turn, walkType);
+    const fullTurn = await axios.get(`${API}/turns/${turn.id}`, { headers: { Authorization: `Bearer ${token}` } });
+    onStartWalk(fullTurn.data, walkType);
   };
   const statusLabel = { notice_received: 'Notice Received', walk_scheduled: 'Walk Scheduled', walk_complete: 'Walk Complete', scoped: 'Scoped', in_progress: 'In Progress', qa: 'QA', certified_ready: 'Certified Ready' };
   const statusColor = { notice_received: '#6b7280', walk_scheduled: '#f59e0b', walk_complete: '#3b82f6', scoped: '#8b5cf6', in_progress: '#14B8A6', qa: '#f97316', certified_ready: '#22c55e' };
@@ -2007,7 +2009,7 @@ export default function App() {
 
   const handleLangChange = (l) => { setLang(l); localStorage.setItem('techLang', l); };
   const handleLogin = (techData) => { setTech(techData); setToken(localStorage.getItem('techToken')); };
-  const handleLogout = () => { localStorage.clear(); setTech(null); setToken(''); setScreen('list'); };
+  const handleLogout = () => { localStorage.clear(); setTech(null); setToken(''); setScreen('turn_tasks'); };
   const handleStatusUpdate = () => {};
   const handleCheckInComplete = (data) => { setCheckInData(data); setSelectedJob(prev => ({ ...prev, tech_checked_in: true, status: 'in_progress' })); setScreen('diagnosis'); };
   const handleDiagnosisComplete = (data) => { setDiagData(data); setScreen('gate1'); };
@@ -2063,7 +2065,7 @@ export default function App() {
   };
   const handleWalkComplete = (result) => {
     console.log('Walk complete:', result);
-    setScreen('list');
+    setScreen("turn_tasks");
   };
   const handleSubmittedNext = () => {
     setScreen('list');
@@ -2137,6 +2139,7 @@ export default function App() {
       {screen === 'tasks' && <TaskScreen token={token} lang={lang} onBack={() => setScreen('list')} />}
       {screen === 'turns' && <TurnWalkList tech={tech} token={token} lang={lang} onBack={() => setScreen('list')} onStartWalk={(turn, walkType) => { setSelectedTurn(turn); setWalkType(walkType); setScreen('turn_walk'); }} />}
         {screen === 'turn_walk' && selectedTurn && <WalkScreen turn={selectedTurn} walkType={walkType} tech={tech} token={token} onBack={() => setScreen('list')} onComplete={handleWalkComplete} />}
+      {screen === "turn_tasks" && selectedTurn && <TurnTaskScreen turn={selectedTurn} token={token} tech={tech} onBack={() => setScreen("turns")} onDone={() => setScreen("turns")} />}
       {show911Confirm && (
         
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '24px' }}>
