@@ -182,8 +182,7 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
   const [roomIndex, setRoomIndex] = useState(0);
   const [allAssessments, setAllAssessments] = useState({});
   const [showSummary, setShowSummary] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [_error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleRoomNext = (assessments) => {
     setAllAssessments(prev => ({ ...prev, [rooms[roomIndex].key]: assessments }));
@@ -202,7 +201,7 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    setError('');
+    
     try {
       const assessmentRows = [];
       rooms.forEach(room => {
@@ -221,7 +220,7 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
       });
       if (onComplete) onComplete({ walkType, assessmentRows });
     } catch (err) {
-      setError(err.message);
+      
       setSubmitting(false);
     }
   };
