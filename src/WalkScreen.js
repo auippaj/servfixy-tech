@@ -182,7 +182,8 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
   const [roomIndex, setRoomIndex] = useState(0);
   const [allAssessments, setAllAssessments] = useState({});
   const [showSummary, setShowSummary] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
 
   const handleRoomNext = (assessments) => {
     setAllAssessments(prev => ({ ...prev, [rooms[roomIndex].key]: assessments }));
@@ -242,5 +243,6 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
     return <SummaryScreen rooms={rooms} allAssessments={allAssessments} unitNumber={turn?.unit_number} walkType={walkType} onSubmit={handleSubmit} onBack={handleBack} submitting={submitting} />;
   }
 
-  return <RoomScreen room={rooms[roomIndex]} roomIndex={roomIndex} totalRooms={rooms.length} onNext={handleRoomNext} onBack={handleBack} isLast={roomIndex === rooms.length - 1} />;
+  if (roomIndex >= rooms.length) return null;
+return <RoomScreen room={rooms[roomIndex]} roomIndex={roomIndex} totalRooms={rooms.length} onNext={handleRoomNext} onBack={handleBack} isLast={roomIndex === rooms.length - 1} />;
 }
