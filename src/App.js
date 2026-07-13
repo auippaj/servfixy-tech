@@ -2076,6 +2076,8 @@ export default function App() {
         body: JSON.stringify({ walk_type: walkType, walked_by: tech.id })
       });
       const walkData = await walkRes.json();
+      console.log('walkRes status:', walkRes.status, 'walkData:', JSON.stringify(walkData));
+      console.log('assessmentRows:', JSON.stringify(assessmentRows));
       if (walkRes.ok && walkData.id && assessmentRows && assessmentRows.length > 0) {
         await fetch(`${API}/turns/${selectedTurn.id}/walks/${walkData.id}/assessments`, {
           method: 'POST',
