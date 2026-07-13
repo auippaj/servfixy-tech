@@ -2067,8 +2067,23 @@ export default function App() {
     }
     setScreen('submitted');
   };
-  const handleWalkComplete = (result) => {
-    console.log('Walk complete:', result);
+  const handleWalkComplete = async (result) => {
+    const { walkType, assessmentRows } = result;
+    try {
+      const walkRes = await fetch(`${API}/api/turns/${selectedTurn.id}/walks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ walk_type: walkType, walked_by: tech.id })
+      });
+      const walkData = await walkRes.json();
+      if (walkRes.ok && walkData.id && assessmentRows && assessmentRows.length > 0) {
+        await fetch(`${API}/api/turns/${selectedTurn.id}/walks/${walkData.id}/assessments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ assessments: assessmentRows })
+        });
+      }
+    } catch (err) { console.error('Walk submit error:', err); }
     setScreen("turn_tasks");
   };
   const handleSubmittedNext = () => {
