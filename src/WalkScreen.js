@@ -244,5 +244,5 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
   }
 
   if (roomIndex >= rooms.length) return null;
-return <RoomScreen room={rooms[roomIndex]} roomIndex={roomIndex} totalRooms={rooms.length} onNext={handleRoomNext} onBack={handleBack} isLast={roomIndex === rooms.length - 1} />;
+return <RoomScreen key={roomIndex} room={rooms[roomIndex]} roomIndex={roomIndex} totalRooms={rooms.length} onNext={handleRoomNext} onBack={handleBack} isLast={roomIndex === rooms.length - 1} />;
 }
