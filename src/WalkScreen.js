@@ -134,18 +134,19 @@ function RoomScreen({ room, roomIndex, totalRooms, onNext, onBack, isLast, turnI
                     ref={el => fileRefs.current[item] = el}
                     onChange={e => handlePhoto(item, e.target.files[0])}
                   />
-                  {a.photo ? (
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
-                      <img src={a.photo} alt="damage" style={{ width: '100%', maxHeight: '160px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #f87171' }} />
-                      <button onClick={() => { setField(item, 'photo', null); if (fileRefs.current[item]) fileRefs.current[item].value = ''; }}
-                        style={{ position: 'absolute', top: '6px', right: '6px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>✕</button>
-                    </div>
-                  ) : (
-                    <button onClick={() => fileRefs.current[item]?.click()} disabled={a.uploading}
-                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '2px dashed #f87171', backgroundColor: '#3a1e1e', color: '#f87171', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
-                      {a.uploading ? 'Uploading...' : '📷 Add Photo'}
-                    </button>
-                  )}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                    {(a.photos || []).map((url, idx) => (
+                      <div key={idx} style={{ position: 'relative', width: '80px', height: '80px' }}>
+                        <img src={url} alt="damage" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #f87171' }} />
+                        <button onClick={() => setAssessments(as => ({ ...as, [item]: { ...as[item], photos: as[item].photos.filter((_, i) => i !== idx) } }))}
+                          style={{ position: 'absolute', top: '2px', right: '2px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => fileRefs.current[item]?.click()} disabled={a.uploading}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '2px dashed #f87171', backgroundColor: '#3a1e1e', color: '#f87171', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+                    {a.uploading ? 'Uploading...' : `📷 ${(a.photos || []).length > 0 ? 'Add Another Photo' : 'Add Photo'}`}
+                  </button>
                 </div>
               )}
 
@@ -190,7 +191,7 @@ function SummaryScreen({ rooms, allAssessments, unitNumber, walkType, onSubmit, 
     const a = allAssessments[room.key] || {};
     Object.entries(a).forEach(([item, val]) => {
       if (val.condition && val.condition > 1) {
-        flags.push({ room: room.label, item, condition: val.condition, notes: val.notes, photo: val.photo });
+        flags.push({ room: room.label, item, condition: val.condition, notes: val.notes, photos: val.photos || [] });
       }
     });
   });
@@ -243,7 +244,7 @@ function SummaryScreen({ rooms, allAssessments, unitNumber, walkType, onSubmit, 
                 <div style={{ fontWeight: '600', fontSize: '13px', color: '#1e293b' }}>{f.room} — {f.item}</div>
                 <span style={{ backgroundColor: cl.bg, color: cl.color, fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '8px' }}>{cl.label}</span>
               </div>
-              {f.photo && <img src={f.photo} alt="damage" style={{ width: '100%', maxHeight: '120px', objectFit: 'cover', borderRadius: '6px', marginBottom: '6px' }} />}
+              {(f.photos || []).map((url, i) => <img key={i} src={url} alt="damage" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', marginRight: '6px', marginBottom: '6px' }} />)}
               {f.notes && <div style={{ fontSize: '12px', color: '#64748b' }}>{f.notes}</div>}
             </div>
           );
@@ -296,7 +297,7 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
               item_label: item,
               condition_class: val.condition,
               notes: val.notes || null,
-              photo_url: val.photo || null,
+              photo_urls: val.photos || [],
             });
           }
         });
