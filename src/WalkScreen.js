@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 const NAVY = '#1B3A6B';
 const TEAL = '#14B8A6';
+const SUPABASE_URL = 'https://xqovkhwdhgwbbgkpsqcs.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhxb3ZraHdkaGd3YmJna3BzcWNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMTUxODksImV4cCI6MjA5NDY5MTE4OX0.yFhRJrrS-AzIX2xGDX7hNWei6zlB2IcsCxU4Uuf5f94';
 
 const ITEMS = {
   entry:      ['Walls & Paint', 'Ceiling', 'Flooring', 'Light Fixture', 'Doors & Hardware', 'Closet'],
@@ -23,23 +25,73 @@ const CONDITION_LABELS = {
   3: { label: 'Deferred / Capital', color: '#fb923c', bg: '#3a2a1e' },
 };
 
-function RoomScreen({ room, roomIndex, totalRooms, onNext, onBack, isLast }) {
+async function uploadPhoto(file, turnId, roomKey, item) {
+  const ext = file.name.split('.').pop();
+  const path = `${turnId}/${roomKey}/${item.replace(/\s+/g, '_')}_${Date.now()}.${ext}`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/turn-photos/${path}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': file.type,
+      'x-upsert': 'true',
+    },
+    body: file,
+  });
+  if (!res.ok) throw new Error('Upload failed');
+  return `${SUPABASE_URL}/storage/v1/object/public/turn-photos/${path}`;
+}
+
+function RoomScreen({ room, roomIndex, totalRooms, onNext, onBack, isLast, turnId }) {
   const items = ITEMS[room.key] || ['General Condition'];
   const [assessments, setAssessments] = useState(
-    items.reduce((acc, item) => ({ ...acc, [item]: { condition: null, notes: '' } }), {})
+    items.reduce((acc, item) => ({ ...acc, [item]: { condition: null, notes: '', photo: null, uploading: false, listening: false } }), {})
   );
+  const fileRefs = useRef({});
 
   const setCondition = (item, val) =>
     setAssessments(a => ({ ...a, [item]: { ...a[item], condition: val } }));
   const setNotes = (item, val) =>
     setAssessments(a => ({ ...a, [item]: { ...a[item], notes: val } }));
+  const setField = (item, field, val) =>
+    setAssessments(a => ({ ...a, [item]: { ...a[item], [field]: val } }));
+
+  const handlePhoto = async (item, file) => {
+    if (!file) return;
+    setField(item, 'uploading', true);
+    try {
+      const url = await uploadPhoto(file, turnId, room.key, item);
+      setField(item, 'photo', url);
+    } catch (e) {
+      alert('Photo upload failed. Try again.');
+    }
+    setField(item, 'uploading', false);
+  };
+
+  const handleMic = (item) => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) { alert('Voice input not supported on this device.'); return; }
+    const a = assessments[item];
+    if (a.listening) return;
+    const rec = new SpeechRecognition();
+    rec.lang = 'en-US';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    setField(item, 'listening', true);
+    rec.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      setNotes(item, a.notes ? a.notes + ' ' + transcript : transcript);
+      setField(item, 'listening', false);
+    };
+    rec.onerror = () => setField(item, 'listening', false);
+    rec.onend = () => setField(item, 'listening', false);
+    rec.start();
+  };
 
   const allAnswered = items.every(i => assessments[i].condition !== null);
   const progress = ((roomIndex) / totalRooms) * 100;
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
       <div style={{ backgroundColor: NAVY, padding: '16px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
           <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer', padding: 0 }}>&#8592;</button>
@@ -53,7 +105,6 @@ function RoomScreen({ room, roomIndex, totalRooms, onNext, onBack, isLast }) {
         </div>
       </div>
 
-      {/* Items */}
       <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto' }}>
         {items.map(item => {
           const a = assessments[item];
@@ -72,21 +123,52 @@ function RoomScreen({ room, roomIndex, totalRooms, onNext, onBack, isLast }) {
                   );
                 })}
               </div>
+
+              {a.condition === 2 && (
+                <div style={{ marginBottom: '10px' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    style={{ display: 'none' }}
+                    ref={el => fileRefs.current[item] = el}
+                    onChange={e => handlePhoto(item, e.target.files[0])}
+                  />
+                  {a.photo ? (
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <img src={a.photo} alt="damage" style={{ width: '100%', maxHeight: '160px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #f87171' }} />
+                      <button onClick={() => { setField(item, 'photo', null); if (fileRefs.current[item]) fileRefs.current[item].value = ''; }}
+                        style={{ position: 'absolute', top: '6px', right: '6px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>✕</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => fileRefs.current[item]?.click()} disabled={a.uploading}
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '2px dashed #f87171', backgroundColor: '#3a1e1e', color: '#f87171', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+                      {a.uploading ? 'Uploading...' : '📷 Add Photo'}
+                    </button>
+                  )}
+                </div>
+              )}
+
               {a.condition && a.condition !== 1 && (
-                <textarea
-                  placeholder="Notes (optional)"
-                  value={a.notes}
-                  onChange={e => setNotes(item, e.target.value)}
-                  rows={2}
-                  style={{ width: '100%', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px', fontSize: '13px', color: '#1e293b', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-                />
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                  <textarea
+                    placeholder="Notes (optional)"
+                    value={a.notes}
+                    onChange={e => setNotes(item, e.target.value)}
+                    rows={2}
+                    style={{ flex: 1, border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px', fontSize: '13px', color: '#1e293b', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                  />
+                  <button onClick={() => handleMic(item)}
+                    style={{ width: '40px', height: '40px', borderRadius: '8px', border: 'none', backgroundColor: a.listening ? '#ef4444' : '#f1f5f9', color: a.listening ? 'white' : '#64748b', fontSize: '18px', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    🎤
+                  </button>
+                </div>
               )}
             </div>
           );
         })}
       </div>
 
-      {/* Footer */}
       <div style={{ padding: '16px', backgroundColor: 'white', borderTop: '1px solid #e2e8f0' }}>
         {!allAnswered && (
           <div style={{ color: '#94a3b8', fontSize: '12px', textAlign: 'center', marginBottom: '10px' }}>
@@ -108,7 +190,7 @@ function SummaryScreen({ rooms, allAssessments, unitNumber, walkType, onSubmit, 
     const a = allAssessments[room.key] || {};
     Object.entries(a).forEach(([item, val]) => {
       if (val.condition && val.condition > 1) {
-        flags.push({ room: room.label, item, condition: val.condition, notes: val.notes });
+        flags.push({ room: room.label, item, condition: val.condition, notes: val.notes, photo: val.photo });
       }
     });
   });
@@ -161,6 +243,7 @@ function SummaryScreen({ rooms, allAssessments, unitNumber, walkType, onSubmit, 
                 <div style={{ fontWeight: '600', fontSize: '13px', color: '#1e293b' }}>{f.room} — {f.item}</div>
                 <span style={{ backgroundColor: cl.bg, color: cl.color, fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '8px' }}>{cl.label}</span>
               </div>
+              {f.photo && <img src={f.photo} alt="damage" style={{ width: '100%', maxHeight: '120px', objectFit: 'cover', borderRadius: '6px', marginBottom: '6px' }} />}
               {f.notes && <div style={{ fontSize: '12px', color: '#64748b' }}>{f.notes}</div>}
             </div>
           );
@@ -184,7 +267,6 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
   const [showSummary, setShowSummary] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-
   const handleRoomNext = (assessments) => {
     setAllAssessments(prev => ({ ...prev, [rooms[roomIndex].key]: assessments }));
     if (roomIndex + 1 >= rooms.length) {
@@ -202,7 +284,6 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    
     try {
       const assessmentRows = [];
       rooms.forEach(room => {
@@ -215,13 +296,13 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
               item_label: item,
               condition_class: val.condition,
               notes: val.notes || null,
+              photo_url: val.photo || null,
             });
           }
         });
       });
       if (onComplete) onComplete({ walkType, assessmentRows });
     } catch (err) {
-      
       setSubmitting(false);
     }
   };
@@ -244,5 +325,5 @@ export default function WalkScreen({ turn, walkType, tech, token, onBack, onComp
   }
 
   if (roomIndex >= rooms.length) return null;
-return <RoomScreen key={roomIndex} room={rooms[roomIndex]} roomIndex={roomIndex} totalRooms={rooms.length} onNext={handleRoomNext} onBack={handleBack} isLast={roomIndex === rooms.length - 1} />;
+  return <RoomScreen key={roomIndex} room={rooms[roomIndex]} roomIndex={roomIndex} totalRooms={rooms.length} onNext={handleRoomNext} onBack={handleBack} isLast={roomIndex === rooms.length - 1} turnId={turn?.id} />;
 }
