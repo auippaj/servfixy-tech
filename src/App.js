@@ -1956,6 +1956,8 @@ export default function App() {
   const [lang, setLang] = useState(() => localStorage.getItem('techLang') || 'en');
   const [show911Confirm, setShow911Confirm] = useState(false);
   const [showSupportUnavailable, setShowSupportUnavailable] = useState(false);
+  const [myTurnTasks, setMyTurnTasks] = useState([]);
+  const [myTasksLoading, setMyTasksLoading] = useState(false);
 
   const handleSupportVideoCall = async () => {
     try {
@@ -2013,6 +2015,18 @@ export default function App() {
 
   const handleLangChange = (l) => { setLang(l); localStorage.setItem('techLang', l); };
   const handleLogin = (techData) => { setTech(techData); setToken(localStorage.getItem('techToken')); };
+  useEffect(() => {
+    if (screen === 'list' && tech && token) {
+      setMyTasksLoading(true);
+      fetch(`https://servfixy-production.up.railway.app/api/turns/my-tasks`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(r => r.json())
+        .then(data => { setMyTurnTasks(Array.isArray(data) ? data : []); setMyTasksLoading(false); })
+        .catch(() => setMyTasksLoading(false));
+    }
+  }, [screen, tech, token]);
+
   const handleLogout = () => { localStorage.clear(); setTech(null); setToken(''); setScreen('turn_tasks'); };
   const handleStatusUpdate = () => {};
   const handleCheckInComplete = (data) => { setCheckInData(data); setSelectedJob(prev => ({ ...prev, tech_checked_in: true, status: 'in_progress' })); setScreen('diagnosis'); };
@@ -2150,6 +2164,42 @@ export default function App() {
       )}
       {screen === 'list' && <div onClick={() => setScreen('tasks')} style={{ backgroundColor: '#14B8A6', color: 'white', padding: '14px 16px', margin: '12px 16px 0', borderRadius: '10px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🧪 Rounds & Tasks</span><span>→</span></div>}
       {screen === 'list' && <div onClick={() => setScreen('turns')} style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '14px 16px', margin: '8px 16px 0', borderRadius: '10px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🚪 Turn Walks</span><span>→</span></div>}
+      {screen === 'list' && (() => {
+        if (myTasksLoading) return <div style={{ margin: '8px 16px 0', padding: '12px 16px', backgroundColor: '#f3f4f6', borderRadius: '10px', color: '#6b7280', fontSize: '13px' }}>Loading your turn tasks...</div>;
+        if (myTurnTasks.length === 0) return null;
+        // Group by turn
+        const byTurn = myTurnTasks.reduce((acc, t) => {
+          const key = t.turn_id;
+          if (!acc[key]) acc[key] = { turn_id: t.turn_id, unit_number: t.unit_number, floorplan_name: t.floorplan_name, projected_ready_date: t.projected_ready_date, tasks: [] };
+          acc[key].tasks.push(t);
+          return acc;
+        }, {});
+        return (
+          <div style={{ margin: '8px 16px 0' }}>
+            <div style={{ fontSize: '11px', fontWeight: '700', color: '#6b7280', letterSpacing: '1px', marginBottom: '6px', paddingLeft: '2px' }}>MY TURN TASKS</div>
+            {Object.values(byTurn).map(group => {
+              const pending = group.tasks.filter(t => t.status === 'pending').length;
+              const inProg = group.tasks.filter(t => t.status === 'in_progress').length;
+              const fakeTurn = { id: group.turn_id, unit_number: group.unit_number, floorplan_name: group.floorplan_name, floorplan_type: group.floorplan_name };
+              return (
+                <div key={group.turn_id}
+                  onClick={() => { setSelectedTurn(fakeTurn); setScreen('turn_tasks'); }}
+                  style={{ backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px 16px', marginBottom: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                  <div>
+                    <div style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '14px' }}>Unit {group.unit_number}</div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>{group.floorplan_name || ''}</div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                      {inProg > 0 && <span style={{ fontSize: '11px', backgroundColor: '#fff7ed', color: '#f97316', padding: '2px 8px', borderRadius: '6px', fontWeight: '600' }}>▶ {inProg} in progress</span>}
+                      {pending > 0 && <span style={{ fontSize: '11px', backgroundColor: '#f3f4f6', color: '#6b7280', padding: '2px 8px', borderRadius: '6px' }}>{pending} pending</span>}
+                    </div>
+                  </div>
+                  <span style={{ color: '#14B8A6', fontSize: '20px' }}>→</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
       {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
       {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={handleBeginCheckIn} onVideoCall={handleVideoCall} lang={lang} />}
       {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} state={checkInState} setState={updateCheckInState} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
