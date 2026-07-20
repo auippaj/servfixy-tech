@@ -3,6 +3,8 @@ import axios from 'axios';
 import TaskScreen from './TaskScreen';
 import WalkScreen from './WalkScreen';
 import TurnTaskScreen from "./TurnTaskScreen";
+import { cacheJobs, getCachedJobs, saveAuth, getAuth, enqueue } from './db';
+import { replayQueue } from './offlineQueue';
 const API = 'https://servfixy-production.up.railway.app/api';
 
 const statusColor = { pending_triage: '#1e3a5f', dispatched: '#3b82f6', scheduled: '#14B8A6', in_progress: '#f97316', pending_qa: '#7c3aed', completed: '#22c55e' };
@@ -332,8 +334,15 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
   const [actionLoading, setActionLoading] = useState(null);
   const fetchJobs = () => {
     axios.get(`${API}/technicians/${tech.id}/jobs`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setJobs(res.data))
-      .catch(() => setJobs([]))
+      .then(res => {
+        setJobs(res.data);
+        cacheJobs(res.data).catch(() => {});
+      })
+      .catch(() => {
+        getCachedJobs().then(cached => {
+          if (cached && cached.length > 0) setJobs(cached);
+        }).catch(() => {});
+      })
       .finally(() => setLoading(false));
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2014,6 +2023,19 @@ export default function App() {
   };
 
   const handleLangChange = (l) => { setLang(l); localStorage.setItem('techLang', l); };
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const goOnline = () => {
+      setIsOnline(true);
+      const t = localStorage.getItem('techToken');
+      if (t) replayQueue(t).catch(() => {});
+    };
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
+  }, []);
+
   const handleLogin = (techData) => { setTech(techData); setToken(localStorage.getItem('techToken')); };
   useEffect(() => {
     if (screen === 'list' && tech && token) {
@@ -2128,6 +2150,11 @@ export default function App() {
   const t = STRINGS[lang];
 
   if (!tech) return <LoginScreen onLogin={handleLogin} lang={lang} setLang={handleLangChange} />;
+  const OfflineBanner = () => !isOnline ? (
+    <div style={{ background: '#f97316', color: 'white', textAlign: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: '600', position: 'sticky', top: 0, zIndex: 9999 }}>
+      ⚡ Offline — changes will sync when reconnected
+    </div>
+  ) : null;
   if (tech.email === 'james@servfixy.com') return <AdminDashboard tech={tech} token={token} onLogout={handleLogout} lang={lang} setLang={handleLangChange} />;
 
   const getTitle = () => {
