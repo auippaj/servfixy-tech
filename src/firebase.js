@@ -24,6 +24,10 @@ export async function registerPushToken(authToken) {
       console.log("[push] permission denied");
       return null;
     }
+    // Wait for firebase messaging SW to be ready before subscribing
+    if ('serviceWorker' in navigator) {
+      await navigator.serviceWorker.ready;
+    }
     const fcmToken = await getToken(messaging, { vapidKey: VAPID_KEY });
     if (!fcmToken) {
       console.warn("[push] no FCM token received");
