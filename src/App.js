@@ -3,7 +3,7 @@ import axios from 'axios';
 import TaskScreen from './TaskScreen';
 import WalkScreen from './WalkScreen';
 import TurnTaskScreen from "./TurnTaskScreen";
-import { cacheJobs, getCachedJobs } from './db';
+import { cacheJobs, getCachedJobs, enqueue, updateCachedJob } from './db';
 import { replayQueue } from './offlineQueue';
 import { registerPushToken, onForegroundMessage } from './firebase';
 const API = 'https://servfixy-production.up.railway.app/api';
@@ -351,22 +351,36 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
   const handleAccept = async (e, jobId) => {
     e.stopPropagation();
     setActionLoading(jobId + '_accept');
-    try {
-      await axios.patch(`${API}/service-requests/${jobId}/status`, { status: 'in_progress' }, { headers: { Authorization: `Bearer ${token}` } });
-      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: 'in_progress' } : j));
+    // Optimistic update immediately
+    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: 'in_progress' } : j));
+    updateCachedJob({ id: jobId, status: 'in_progress' }).catch(() => {});
+    if (!navigator.onLine) {
+      await enqueue({ type: 'accept_job', url: `/service-requests/${jobId}/status`, method: 'PATCH', payload: { status: 'in_progress' } });
+      await enqueue({ type: 'touch1', url: `/touchpoints/${jobId}/1`, method: 'PATCH', payload: { fired_by: tech.email, notes: 'Job accepted by technician' } });
+      console.log('[offline] accept queued for job', jobId);
+    } else {
       try {
-        await axios.patch(`${API}/touchpoints/${jobId}/1`, { fired_by: tech.email, notes: 'Job accepted by technician' }, { headers: { Authorization: `Bearer ${token}` } });
-      } catch { console.warn('Touch 1 failed silently'); }
-    } catch { alert(t.failAccept); }
+        await axios.patch(`${API}/service-requests/${jobId}/status`, { status: 'in_progress' }, { headers: { Authorization: `Bearer ${token}` } });
+        try {
+          await axios.patch(`${API}/touchpoints/${jobId}/1`, { fired_by: tech.email, notes: 'Job accepted by technician' }, { headers: { Authorization: `Bearer ${token}` } });
+        } catch { console.warn('Touch 1 failed silently'); }
+      } catch { alert(t.failAccept); }
+    }
     setActionLoading(null);
   };
   const handleDecline = async (e, jobId) => {
     e.stopPropagation();
     setActionLoading(jobId + '_decline');
-    try {
-      await axios.patch(`${API}/service-requests/${jobId}/status`, { status: 'pending_triage' }, { headers: { Authorization: `Bearer ${token}` } });
-      setJobs(prev => prev.filter(j => j.id !== jobId));
-    } catch { alert(t.failDecline); }
+    // Optimistic update immediately
+    setJobs(prev => prev.filter(j => j.id !== jobId));
+    if (!navigator.onLine) {
+      await enqueue({ type: 'decline_job', url: `/service-requests/${jobId}/status`, method: 'PATCH', payload: { status: 'pending_triage' } });
+      console.log('[offline] decline queued for job', jobId);
+    } else {
+      try {
+        await axios.patch(`${API}/service-requests/${jobId}/status`, { status: 'pending_triage' }, { headers: { Authorization: `Bearer ${token}` } });
+      } catch { alert(t.failDecline); }
+    }
     setActionLoading(null);
   };
   if (loading) return <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>{t.loadingJobs}</div>;
@@ -2125,7 +2139,30 @@ export default function App() {
         await axios.patch(`${API}/touchpoints/${selectedJob.id}/5`, { fired_by: tech.email, notes: `Gate 1 submitted. ${data.totalChecked} checklist items completed.` }, { headers: { Authorization: `Bearer ${token}` } });
       } catch { console.warn('Touch 5 failed silently'); }
     } catch (err) {
-      console.error('Gate 1 submit error:', err);
+      if (!navigator.onLine) {
+        // Queue gate1 submit for replay when back online
+        await enqueue({
+          type: 'gate1_submit',
+          url: `/service-requests/${selectedJob.id}/gate1`,
+          method: 'POST',
+          payload: {
+            tech_id: tech.id,
+            root_cause_system: diagData?.system,
+            root_cause_category: diagData?.category,
+            root_cause_cause: diagData?.cause,
+            diagnosis: diagData?.diagnosis,
+            parts: diagData?.parts,
+            time_on_site: diagData?.timeOnSite,
+            checklist_completed: data.totalChecked,
+            signed: data.signed,
+            gps_checkout_lat: data.gpsOut?.lat || null,
+            gps_checkout_lng: data.gpsOut?.lng || null,
+          }
+        }).catch(() => {});
+        console.log('[offline] gate1 queued for job', selectedJob.id);
+      } else {
+        console.error('Gate 1 submit error:', err);
+      }
     }
     setScreen('submitted');
   };
