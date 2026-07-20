@@ -5,6 +5,7 @@ import WalkScreen from './WalkScreen';
 import TurnTaskScreen from "./TurnTaskScreen";
 import { cacheJobs, getCachedJobs, saveAuth, getAuth, enqueue } from './db';
 import { replayQueue } from './offlineQueue';
+import { registerPushToken, onForegroundMessage } from './firebase';
 const API = 'https://servfixy-production.up.railway.app/api';
 
 const statusColor = { pending_triage: '#1e3a5f', dispatched: '#3b82f6', scheduled: '#14B8A6', in_progress: '#f97316', pending_qa: '#7c3aed', completed: '#22c55e' };
@@ -2033,10 +2034,27 @@ export default function App() {
     const goOffline = () => setIsOnline(false);
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
-    return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
+    // Foreground push notifications — show browser notification
+    const unsubPush = onForegroundMessage((payload) => {
+      const { title, body } = payload.notification || {};
+      if (Notification.permission === 'granted' && title) {
+        new Notification(title, { body, icon: '/logo192.png' });
+      }
+    });
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+      if (typeof unsubPush === 'function') unsubPush();
+    };
   }, []);
 
-  const handleLogin = (techData) => { setTech(techData); setToken(localStorage.getItem('techToken')); };
+  const handleLogin = (techData) => {
+    const t = localStorage.getItem('techToken');
+    setTech(techData);
+    setToken(t);
+    // Register FCM push token
+    if (t) registerPushToken(t).catch(() => {});
+  };
   useEffect(() => {
     if (screen === 'list' && tech && token) {
       setMyTasksLoading(true);
