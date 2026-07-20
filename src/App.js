@@ -2025,6 +2025,14 @@ export default function App() {
 
   const handleLangChange = (l) => { setLang(l); localStorage.setItem('techLang', l); };
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // Register FCM push token whenever tech is authenticated
+  useEffect(() => {
+    const t = localStorage.getItem('techToken');
+    if (tech && t) {
+      registerPushToken(t).catch(() => {});
+    }
+  }, [tech]);
   useEffect(() => {
     const goOnline = () => {
       setIsOnline(true);
