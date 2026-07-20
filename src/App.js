@@ -3,7 +3,7 @@ import axios from 'axios';
 import TaskScreen from './TaskScreen';
 import WalkScreen from './WalkScreen';
 import TurnTaskScreen from "./TurnTaskScreen";
-import { cacheJobs, getCachedJobs, saveAuth, getAuth, enqueue } from './db';
+import { cacheJobs, getCachedJobs } from './db';
 import { replayQueue } from './offlineQueue';
 import { registerPushToken, onForegroundMessage } from './firebase';
 const API = 'https://servfixy-production.up.railway.app/api';
