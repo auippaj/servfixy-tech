@@ -9,13 +9,15 @@ let _replaying = false;
 export async function replayQueue(token) {
   if (_replaying) return;
   _replaying = true;
+  // Always pull freshest token from localStorage
+  const authToken = token || localStorage.getItem('techToken');
   try {
     const items = await getAllQueued();
     if (!items || items.length === 0) return;
     console.log(`[offline] replaying ${items.length} queued action(s)`);
     for (const item of items) {
       try {
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
         if (item.method === 'POST') {
           await axios.post(`${API}${item.url}`, item.payload, { headers });
         } else if (item.method === 'PATCH') {
