@@ -573,16 +573,25 @@ function CheckInScreen({  job, tech, token, onComplete, onBack, lang, state, set
   const handleBeginWork = async () => {
     if (!touch3Fired) {
       setState({ touch3Fired: true });
-      try {
-        await axios.patch(`${API}/touchpoints/${job.id}/3`, { fired_by: tech.email, notes: `RVC: ${rvcCode}` }, { headers: { Authorization: `Bearer ${token}` } });
-      } catch { }
+      if (!navigator.onLine) {
+        await enqueue({ type: 'touch3', url: `/touchpoints/${job.id}/3`, method: 'PATCH', payload: { fired_by: tech.email, notes: `RVC: ${rvcCode}` } }).catch(() => {});
+        console.log('[offline] touch3 queued');
+      } else {
+        try {
+          await axios.patch(`${API}/touchpoints/${job.id}/3`, { fired_by: tech.email, notes: `RVC: ${rvcCode}` }, { headers: { Authorization: `Bearer ${token}` } });
+        } catch { }
+      }
     }
     // Flip tech_checked_in flag so resident video button activates
-    try {
-      await axios.patch(`${API}/service-requests/${job.id}/tech-checkin`, {}, { headers: { Authorization: `Bearer ${token}` } });
-    } catch (err) {
-      console.error('Check-in flag error:', err.message, err.response?.data);
-      alert('Check-in flag error: ' + err.message);
+    if (!navigator.onLine) {
+      await enqueue({ type: 'tech_checkin', url: `/service-requests/${job.id}/tech-checkin`, method: 'PATCH', payload: {} }).catch(() => {});
+      console.log('[offline] tech-checkin queued');
+    } else {
+      try {
+        await axios.patch(`${API}/service-requests/${job.id}/tech-checkin`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      } catch (err) {
+        console.error('Check-in flag error:', err.message, err.response?.data);
+      }
     }
     onComplete({ rvc: rvcCode, photos, coords: gpsCoords, rvcMethod, ppeConfirmed, hvacLow, hvacHigh, refrigerantType, expansionValve, suctionTemp, liquidTemp });
   };
