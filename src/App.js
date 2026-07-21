@@ -795,6 +795,7 @@ const handleHvacAnalysis = async () => {
     }, { headers: { Authorization: `Bearer ${token}` } });
     setState({ hvacAnalysis: res.data, hvacAnalysisLoading: false });
   } catch (err) {
+    console.error('[hvac-analysis] error:', err);
     setState({ hvacAnalysis: { likely_issue: 'Analysis unavailable', confidence: 'Low', next_step: 'Proceed with manual diagnosis' }, hvacAnalysisLoading: false });
   }
 };
