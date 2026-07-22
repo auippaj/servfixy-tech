@@ -2080,12 +2080,45 @@ export default function App() {
     };
   }, []);
 
+  const speakWelcome = async (techName) => {
+    try {
+      const firstName = techName ? techName.split(' ')[0] : 'there';
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.REACT_APP_ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 80,
+          messages: [{ role: 'user', content: `Write a single short spoken greeting for a maintenance technician named ${firstName} starting their workday. Warm, energetic, 2 sentences max. End with: "Thank you for being part of the Servfixy team." Return only the spoken text, no quotes.` }]
+        })
+      });
+      const ai = await res.json();
+      const msg = ai?.content?.[0]?.text?.trim();
+      if (!msg || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(msg);
+      utt.rate = 0.95;
+      utt.pitch = 1.05;
+      utt.volume = 1;
+      // Prefer a warm natural voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v => /samantha|karen|moira|victoria|google us english/i.test(v.name));
+      if (preferred) utt.voice = preferred;
+      window.speechSynthesis.speak(utt);
+    } catch (e) {
+      // Speech is a nice-to-have; never block login on failure
+      console.warn('[speakWelcome]', e);
+    }
+  };
+
   const handleLogin = (techData) => {
     const t = localStorage.getItem('techToken');
     setTech(techData);
     setToken(t);
     // Register FCM push token
     if (t) registerPushToken(t).catch(() => {});
+    // Welcome message
+    speakWelcome(techData?.name);
   };
   useEffect(() => {
     if (screen === 'list' && tech && token) {
