@@ -2081,20 +2081,25 @@ export default function App() {
   }, []);
 
   const speakWelcome = async (firstName, lastName) => {
+    console.log('[speakWelcome] called with', firstName, lastName);
     try {
       const res = await fetch('https://servfixy-production.up.railway.app/api/tech-auth/welcome-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ first_name: firstName || '', last_name: lastName || '' })
       });
-      if (!res.ok) return;
+      console.log('[speakWelcome] response status', res.status, res.headers.get('content-type'));
+      if (!res.ok) { console.warn('[speakWelcome] non-ok response'); return; }
       const audioBlob = await res.blob();
+      console.log('[speakWelcome] blob size', audioBlob.size, audioBlob.type);
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       audio.onended = () => URL.revokeObjectURL(audioUrl);
-      audio.play().catch(e => console.warn('[speakWelcome]', e));
+      audio.onerror = (e) => console.error('[speakWelcome] audio error', e);
+      const playResult = audio.play();
+      if (playResult) playResult.catch(e => console.warn('[speakWelcome] play()', e));
     } catch (e) {
-      console.warn('[speakWelcome]', e);
+      console.warn('[speakWelcome] catch:', e);
     }
   };
 
