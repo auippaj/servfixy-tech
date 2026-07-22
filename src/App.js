@@ -2090,15 +2090,25 @@ export default function App() {
       });
       const { message } = await res.json();
       if (!message) return;
-      window.speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(message);
-      utt.rate = 0.95;
-      utt.pitch = 1.05;
-      utt.volume = 1;
+      const speak = (voices) => {
+        window.speechSynthesis.cancel();
+        const utt = new SpeechSynthesisUtterance(message);
+        utt.rate = 0.95;
+        utt.pitch = 1.05;
+        utt.volume = 1;
+        const preferred = voices.find(v => /samantha|karen|moira|victoria|google us english/i.test(v.name));
+        if (preferred) utt.voice = preferred;
+        window.speechSynthesis.speak(utt);
+      };
       const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find(v => /samantha|karen|moira|victoria|google us english/i.test(v.name));
-      if (preferred) utt.voice = preferred;
-      window.speechSynthesis.speak(utt);
+      if (voices.length > 0) {
+        speak(voices);
+      } else {
+        window.speechSynthesis.onvoiceschanged = () => {
+          speak(window.speechSynthesis.getVoices());
+          window.speechSynthesis.onvoiceschanged = null;
+        };
+      }
     } catch (e) {
       console.warn('[speakWelcome]', e);
     }
