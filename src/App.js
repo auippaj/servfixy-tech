@@ -1987,7 +1987,7 @@ export default function App() {
   const [gate1Data, setGate1Data] = useState(null);
   const [videoToken, setVideoToken] = useState(null);
   const [videoRoom, setVideoRoom] = useState(null);
-  const [lang, setLang] = useState(() => localStorage.getItem('techLang') || 'en');
+  const [lang, setLang] = useState(() => localStorage.getItem('techLang') || (navigator.language || navigator.userLanguage || '').toLowerCase().startsWith('es') ? 'es' : 'en');
   const [show911Confirm, setShow911Confirm] = useState(false);
   const [showSupportUnavailable, setShowSupportUnavailable] = useState(false);
   const [myTurnTasks, setMyTurnTasks] = useState([]);
