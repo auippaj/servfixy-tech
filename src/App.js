@@ -2080,12 +2080,12 @@ export default function App() {
     };
   }, []);
 
-  const speakWelcome = async (techName) => {
+  const speakWelcome = async (firstName, lastName) => {
     try {
       const res = await fetch('https://servfixy-production.up.railway.app/api/tech-auth/welcome-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: techName || '' })
+        body: JSON.stringify({ first_name: firstName || '', last_name: lastName || '' })
       });
       if (!res.ok) return;
       const audioBlob = await res.blob();
@@ -2105,7 +2105,7 @@ export default function App() {
     // Register FCM push token
     if (t) registerPushToken(t).catch(() => {});
     // Welcome message
-    speakWelcome(techData?.name);
+    speakWelcome(techData?.first_name, techData?.last_name);
   };
   useEffect(() => {
     if (screen === 'list' && tech && token) {
