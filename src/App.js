@@ -2082,33 +2082,17 @@ export default function App() {
 
   const speakWelcome = async (techName) => {
     try {
-      if (!window.speechSynthesis) return;
       const res = await fetch('https://servfixy-production.up.railway.app/api/tech-auth/welcome-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: techName || '' })
       });
-      const { message } = await res.json();
-      if (!message) return;
-      const speak = (voices) => {
-        window.speechSynthesis.cancel();
-        const utt = new SpeechSynthesisUtterance(message);
-        utt.rate = 0.95;
-        utt.pitch = 1.05;
-        utt.volume = 1;
-        const preferred = voices.find(v => /samantha|karen|moira|victoria|google us english/i.test(v.name));
-        if (preferred) utt.voice = preferred;
-        window.speechSynthesis.speak(utt);
-      };
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        speak(voices);
-      } else {
-        window.speechSynthesis.onvoiceschanged = () => {
-          speak(window.speechSynthesis.getVoices());
-          window.speechSynthesis.onvoiceschanged = null;
-        };
-      }
+      if (!res.ok) return;
+      const audioBlob = await res.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.onended = () => URL.revokeObjectURL(audioUrl);
+      audio.play().catch(e => console.warn('[speakWelcome]', e));
     } catch (e) {
       console.warn('[speakWelcome]', e);
     }
