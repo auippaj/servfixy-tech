@@ -8,6 +8,18 @@ import { replayQueue } from './offlineQueue';
 import { registerPushToken, onForegroundMessage } from './firebase';
 const API = 'https://servfixy-production.up.railway.app/api';
 
+// Haptic feedback — silent on devices that don't support it
+const haptic = (pattern = [10]) => { try { navigator.vibrate && navigator.vibrate(pattern); } catch(e) {} };
+
+// Inject skeleton pulse animation globally once
+(function injectSkeletonCSS() {
+  if (document.getElementById('sfx-skeleton-style')) return;
+  const s = document.createElement('style');
+  s.id = 'sfx-skeleton-style';
+  s.textContent = '@keyframes sfxPulse { 0%,100%{opacity:1} 50%{opacity:0.4} } .sfx-skeleton{animation:sfxPulse 1.5s ease-in-out infinite;background:#e5e7eb;border-radius:6px;}';
+  document.head.appendChild(s);
+})();
+
 const statusColor = { pending_triage: '#1e3a5f', dispatched: '#3b82f6', scheduled: '#14B8A6', in_progress: '#f97316', pending_qa: '#7c3aed', completed: '#22c55e' };
 const tierColor = { T1: '#ef4444', T2: '#f97316', T3: '#3b82f6', T4: '#a855f7' };
 const tierLabel = { T1: 'Tier 1 - Emergency', T2: 'Tier 2 - Urgent', T3: 'Tier 3 - Routine', T4: 'Tier 4 - Cosmetic' };
@@ -344,9 +356,14 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
       .finally(() => setLoading(false));
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchJobs(); }, [tech.id, token]);
+  useEffect(() => {
+    fetchJobs();
+    const interval = setInterval(fetchJobs, 60000); // auto-refresh every 60s
+    return () => clearInterval(interval);
+  }, [tech.id, token]);
   const handleAccept = async (e, jobId) => {
     e.stopPropagation();
+    haptic([10, 50, 10]);
     setActionLoading(jobId + '_accept');
     // Optimistic update immediately
     setJobs(prev => prev.map(j => j.id === jobId ? { ...j, status: 'in_progress' } : j));
@@ -367,6 +384,7 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
   };
   const handleDecline = async (e, jobId) => {
     e.stopPropagation();
+    haptic([30]);
     setActionLoading(jobId + '_decline');
     // Optimistic update immediately
     setJobs(prev => prev.filter(j => j.id !== jobId));
@@ -380,21 +398,58 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
     }
     setActionLoading(null);
   };
-  if (loading) return <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>{t.loadingJobs}</div>;
-  return (
+  // Pull-to-refresh
+  const [pullStartY, setPullStartY] = React.useState(null);
+  const [isPulling, setIsPulling] = React.useState(false);
+  const handleTouchStart = (e) => setPullStartY(e.touches[0].clientY);
+  const handleTouchEnd = (e) => {
+    if (pullStartY !== null && e.changedTouches[0].clientY - pullStartY > 70) {
+      haptic([10, 30, 10]);
+      fetchJobs();
+    }
+    setPullStartY(null);
+    setIsPulling(false);
+  };
+  const handleTouchMove = (e) => {
+    if (pullStartY !== null && e.touches[0].clientY - pullStartY > 40) setIsPulling(true);
+  };
+
+  if (loading) return (
     <div style={{ paddingBottom: '80px' }}>
-      <div style={{ padding: '12px 16px', color: '#6b7280', fontSize: '13px' }}>{jobs.length} {jobs.length !== 1 ? t.assignedJobs : t.assignedJob}</div>
+      {[1,2,3].map(i => (
+        <div key={i} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', borderLeft: '4px solid #e5e7eb' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <div style={{ width: '80px', height: '16px', backgroundColor: '#f0f4ff', borderRadius: '6px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <div style={{ width: '90px', height: '16px', backgroundColor: '#f0f4ff', borderRadius: '6px' }} />
+          </div>
+          <div style={{ width: '100%', height: '14px', backgroundColor: '#f0f4ff', borderRadius: '6px', marginBottom: '8px' }} />
+          <div style={{ width: '60%', height: '12px', backgroundColor: '#f0f4ff', borderRadius: '6px' }} />
+        </div>
+      ))}
+    </div>
+  );
+  return (
+    <div style={{ paddingBottom: '80px' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={handleTouchMove}>
+      {isPulling && <div style={{ textAlign: 'center', padding: '12px', color: '#14B8A6', fontSize: '13px', fontWeight: '600' }}>↓ Release to refresh</div>}
+      <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {jobs.length > 0 && <span style={{ backgroundColor: '#ef4444', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '800' }}>{jobs.length}</span>}
+          <span style={{ color: '#6b7280', fontSize: '13px' }}>{jobs.length} {jobs.length !== 1 ? t.assignedJobs : t.assignedJob}</span>
+        </div>
+        <span style={{ color: '#9ca3af', fontSize: '11px' }}>↕ Pull to refresh</span>
+      </div>
       {jobs.length === 0 && (
         <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '32px 16px', margin: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', textAlign: 'center', color: '#6b7280' }}>
-          <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
-          {t.noJobs}
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>✅</div>
+          <div style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '16px', marginBottom: '6px' }}>{t.noJobs}</div>
+          <div style={{ fontSize: '13px', color: '#9ca3af' }}>{lang === 'es' ? 'Todo esta bajo control. Buen trabajo.' : 'Queue is clear. Great work.'}</div>
         </div>
       )}
       {jobs.map(job => {
         const tier = getTier(job);
         const tLabel = lang === 'es' ? tierLabelEs[tier] : tierLabel[tier];
         return (
-          <div key={job.id} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', cursor: 'pointer', borderLeft: `4px solid ${tierColor[tier]}` }} onClick={() => onSelectJob(job)}>
+          <div key={job.id} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: tier === 'T1' ? '0 0 0 2px #ef4444, 0 1px 8px rgba(239,68,68,0.25)' : '0 1px 4px rgba(0,0,0,0.08)', cursor: 'pointer', borderLeft: `4px solid ${tierColor[tier]}` }} onClick={() => { haptic([10]); onSelectJob(job); }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
               <span style={{ fontWeight: '600', color: '#1B3A6B', fontSize: '15px' }}>{t.unit} {job.unit_number || ''}</span>
               <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700' }}>{tLabel}</span>
@@ -1616,11 +1671,15 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
             )}
           </div>
         )}
-        <div style={{ backgroundColor: '#f9fafb', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
-          <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{t.location}</div>
-          <div style={{ fontWeight: '600' }}>{t.unit} {job.unit_number || ''}</div>
-          <div style={{ color: '#374151' }}>{job.property_name}</div>
-        </div>
+        <a
+          href={`https://maps.google.com/?q=${encodeURIComponent((job.property_address || job.property_name || '') + ' Houston TX')}`}
+          target="_blank" rel="noopener noreferrer"
+          style={{ display: 'block', backgroundColor: '#f0f4ff', borderRadius: '8px', padding: '12px', marginBottom: '16px', textDecoration: 'none', border: '1px solid #c7d7f5' }}
+          onClick={() => haptic([10])}>
+          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📍 {t.location} — Tap to Navigate</div>
+          <div style={{ fontWeight: '700', color: '#1B3A6B' }}>{t.unit} {job.unit_number || ''}</div>
+          <div style={{ color: '#374151', fontSize: '13px' }}>{job.property_name}</div>
+        </a>
         <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '6px' }}>{t.currentStatus}</div>
         <span style={{ backgroundColor: statusColor[job.status] || '#6b7280', color: 'white', padding: '3px 8px', borderRadius: '12px', fontSize: '13px', fontWeight: '600' }}>
           {lang === 'es' ? ({ in_progress: 'En progreso', pending: 'Pendiente', assigned: 'Asignado', completed: 'Completado' }[job.status] || job.status) : job.status?.replace('_', ' ')}
@@ -1630,7 +1689,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
         <div style={{ backgroundColor: '#1B3A6B', borderRadius: '10px', padding: '20px', margin: '0 12px 12px', boxShadow: '0 2px 8px rgba(27,58,107,0.25)' }}>
           <div style={{ color: 'white', fontWeight: '700', fontSize: '15px', marginBottom: '4px' }}>{t.readyToStart}</div>
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', marginBottom: '16px' }}>{t.checkInRequired}</div>
-          <button style={{ backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%' }} onClick={onCheckIn}>{t.beginCheckIn}</button>
+          <button style={{ backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%' }} onClick={() => { haptic([15, 50, 15]); onCheckIn(); }}>{t.beginCheckIn}</button>
           {job.status === 'in_progress' && job.tech_checked_in && <button style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginTop: '10px' }} onClick={() => onVideoCall(job)}>📹 Start Video Call</button>}
         </div>
       )}
@@ -1972,6 +2031,53 @@ const initialGate1State = {
   gpsOut: null,
 };
 
+function JobHistoryScreen({ tech, token, lang, onBack }) {
+  const t = STRINGS[lang];
+  const [jobs, setJobs] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const tierColor = { T1: '#ef4444', T2: '#f97316', T3: '#3b82f6', T4: '#a855f7' };
+  React.useEffect(() => {
+    fetch(`${API}/technicians/${tech.id}/jobs?status=completed&limit=50`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => { setJobs(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [tech.id, token]);
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', paddingBottom: '40px' }}>
+      <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer', padding: '0' }}>←</button>
+        <span style={{ fontWeight: '700', fontSize: '17px' }}>📋 {lang === 'es' ? 'Historial' : 'Job History'}</span>
+      </div>
+      {loading && (
+        <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>Loading history...</div>
+      )}
+      {!loading && jobs.length === 0 && (
+        <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '32px 16px', margin: '16px', textAlign: 'center', color: '#6b7280' }}>
+          <div style={{ fontSize: '32px', marginBottom: '8px' }}>📭</div>
+          <div>No completed jobs yet.</div>
+        </div>
+      )}
+      {jobs.map(job => {
+        const tier = getTier(job);
+        return (
+          <div key={job.id} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', borderLeft: `4px solid ${tierColor[tier]}`, opacity: 0.85 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+              <span style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '14px' }}>{t.unit} {job.unit_number || ''}</span>
+              <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '700' }}>✓ Complete</span>
+            </div>
+            <p style={{ margin: '0 0 4px', color: '#374151', fontSize: '13px' }}>{job.description}</p>
+            <div style={{ color: '#9ca3af', fontSize: '11px' }}>
+              {job.property_name} · {job.updated_at ? new Date(job.updated_at).toLocaleDateString() : ''}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function App() {
   const [tech, setTech] = useState(() => { const s = localStorage.getItem('techUser'); return s ? JSON.parse(s) : null; });
   const [token, setToken] = useState(() => localStorage.getItem('techToken') || '');
@@ -2290,8 +2396,13 @@ export default function App() {
           </div>
         </div>
       )}
-      {screen === 'list' && <div onClick={() => setScreen('tasks')} style={{ backgroundColor: '#14B8A6', color: 'white', padding: '14px 16px', margin: '12px 16px 0', borderRadius: '10px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🧪 Rounds & Tasks</span><span>→</span></div>}
-      {screen === 'list' && <div onClick={() => setScreen('turns')} style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '14px 16px', margin: '8px 16px 0', borderRadius: '10px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🚪 Turn Walks</span><span>→</span></div>}
+      {screen === 'list' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', margin: '12px 16px 0' }}>
+          <div onClick={() => { haptic([10]); setScreen('tasks'); }} style={{ backgroundColor: '#14B8A6', color: 'white', padding: '14px 12px', borderRadius: '10px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🧪 Rounds</span><span>→</span></div>
+          <div onClick={() => { haptic([10]); setScreen('history'); }} style={{ backgroundColor: '#7c3aed', color: 'white', padding: '14px 12px', borderRadius: '10px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>📋 History</span><span>→</span></div>
+        </div>
+      )}
+      {screen === 'list' && <div onClick={() => { haptic([10]); setScreen('turns'); }} style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '14px 16px', margin: '8px 16px 0', borderRadius: '10px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🚪 Turn Walks</span><span>→</span></div>}
       {screen === 'list' && (() => {
         if (myTasksLoading) return <div style={{ margin: '8px 16px 0', padding: '12px 16px', backgroundColor: '#f3f4f6', borderRadius: '10px', color: '#6b7280', fontSize: '13px' }}>Loading your turn tasks...</div>;
         if (myTurnTasks.length === 0) return null;
@@ -2336,6 +2447,7 @@ export default function App() {
       {screen === 'submitted' && selectedJob && <SubmittedScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} diagData={diagData} gate1Data={gate1Data} onNext={handleSubmittedNext} lang={lang} />}
       {screen === 'video' && selectedJob && videoToken && <VideoCallScreen job={selectedJob} token={videoToken} roomName={videoRoom} onBack={() => setScreen('detail')} lang={lang} />}
       {screen === 'tasks' && <TaskScreen token={token} lang={lang} onBack={() => setScreen('list')} />}
+      {screen === 'history' && <JobHistoryScreen tech={tech} token={token} lang={lang} onBack={() => setScreen('list')} />}
       {screen === 'turns' && <TurnWalkList tech={tech} token={token} lang={lang} onBack={() => setScreen('list')} onStartWalk={(turn, walkType) => { setSelectedTurn(turn); setWalkType(walkType); setScreen('turn_walk'); }} />}
         {screen === 'turn_walk' && selectedTurn && <WalkScreen turn={selectedTurn} walkType={walkType} tech={tech} token={token} onBack={() => setScreen('list')} onComplete={handleWalkComplete} />}
       {screen === "turn_tasks" && selectedTurn && <TurnTaskScreen turn={selectedTurn} token={token} tech={tech} onBack={() => setScreen("turns")} onDone={() => setScreen("turns")} />}
