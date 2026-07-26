@@ -2046,6 +2046,10 @@ export default function App() {
 
   const handleLangChange = (l) => { setLang(l); localStorage.setItem('techLang', l); };
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [authReady, setAuthReady] = useState(false);
+
+  // Mark auth as ready after first render so we never flash a blank screen
+  useEffect(() => { setAuthReady(true); }, []);
 
   // Register FCM push token whenever tech is authenticated
   useEffect(() => {
@@ -2244,6 +2248,7 @@ export default function App() {
 
   const t = STRINGS[lang];
 
+  if (!authReady) return null;
   if (!tech) return <LoginScreen onLogin={handleLogin} lang={lang} setLang={handleLangChange} />;
   const OfflineBanner = () => !isOnline ? (
     <div style={{ background: '#f97316', color: 'white', textAlign: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: '600', position: 'sticky', top: 0, zIndex: 9999 }}>
