@@ -1354,6 +1354,9 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
   const afterPhotoRef = useRef(null);
   const [gpsOutLoading, setGpsOutLoading] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [unitAssets, setUnitAssets] = useState([]);
+  const [selectedAssetId, setSelectedAssetId] = useState('');
+  const [assetsLoading, setAssetsLoading] = useState(false);
 
   // Lazily initialize `checked` the first time this screen renders for a job.
   // (Effect, not a render-time setState-and-return, so hook order never changes.)
@@ -1373,6 +1376,22 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkInData?.photos?.length, afterPhotos?.length, diagData?.system, diagData?.category, diagData?.cause, diagData?.diagnosis, checkInData?.rvc, diagData?.parts?.length]);
+
+  // Fetch assets for this unit so tech can link work order to asset
+  useEffect(() => {
+    if (!job?.property_id || !job?.unit_number) return;
+    setAssetsLoading(true);
+    fetch(`${process.env.REACT_APP_API_URL || 'https://servfixy-production.up.railway.app/api'}/assets?property_id=${job.property_id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : [];
+        setUnitAssets(list.filter(a => a.unit_number === job.unit_number || a.unit_number === 'Common'));
+      })
+      .catch(() => setUnitAssets([]))
+      .finally(() => setAssetsLoading(false));
+  }, [job?.property_id, job?.unit_number]);
 
   // Until `checked` has been initialized (one tick after first mount),
   // render nothing. This is a plain conditional return AFTER all hooks
@@ -1406,7 +1425,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
   // Combined action: fire GPS check-out (if not already captured), then submit.
   const handleSubmitClick = () => {
     if (gpsOut) {
-      onComplete({ afterPhotos, signed, totalChecked, gpsOut });
+      onComplete({ afterPhotos, signed, totalChecked, gpsOut, selectedAssetId });
       return;
     }
     setSubmitError('');
@@ -1416,14 +1435,14 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
         const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
         setState({ gpsOut: coords });
         setGpsOutLoading(false);
-        onComplete({ afterPhotos, signed, totalChecked, gpsOut: coords });
+        onComplete({ afterPhotos, signed, totalChecked, gpsOut: coords, selectedAssetId });
       },
       (err) => {
         console.error('GPS check-out error:', err);
         setGpsOutLoading(false);
         // Don't block submission on GPS failure — proceed without coords,
         // same spirit as the manual check-in fallback.
-        onComplete({ afterPhotos, signed, totalChecked, gpsOut: null });
+        onComplete({ afterPhotos, signed, totalChecked, gpsOut: null, selectedAssetId });
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -1448,6 +1467,45 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
       </div>
 
       <div style={{ padding: '16px' }}>
+
+        {/* Asset Linkage Picker */}
+        <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '16px', marginBottom: '16px', border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: '13px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>
+            🔗 {lang === 'es' ? 'Vincular activo' : 'Link Asset'}
+          </div>
+          <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '10px' }}>
+            {lang === 'es' ? 'Selecciona el activo en el que trabajaste' : 'Select the asset you worked on — updates health score and CapEx forecast automatically'}
+          </div>
+          {assetsLoading ? (
+            <div style={{ fontSize: '12px', color: '#94a3b8' }}>Loading assets...</div>
+          ) : unitAssets.length === 0 ? (
+            <div style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>No assets registered for this unit.</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {unitAssets.map(asset => {
+                const isSelected = selectedAssetId === asset.id;
+                return (
+                  <button key={asset.id} onClick={() => setSelectedAssetId(isSelected ? '' : asset.id)}
+                    style={{ padding: '10px 14px', borderRadius: '8px', border: '2px solid ' + (isSelected ? '#14B8A6' : '#e5e7eb'),
+                      backgroundColor: isSelected ? 'rgba(20,184,166,0.08)' : '#f8fafc',
+                      textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>{asset.asset_type}</div>
+                      {asset.make && <div style={{ fontSize: '11px', color: '#64748b' }}>{asset.make} {asset.model || ''}</div>}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {asset.unit_number === 'Common' && (
+                        <span style={{ fontSize: '10px', backgroundColor: '#f1f5f9', color: '#64748b', padding: '2px 6px', borderRadius: '4px' }}>Common</span>
+                      )}
+                      {isSelected && <span style={{ color: '#14B8A6', fontSize: '18px', fontWeight: '700' }}>✓</span>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {isDeferred && (
           <div style={{ backgroundColor: '#fef2f2', borderRadius: '10px', padding: '14px 16px', marginBottom: '12px', border: '2px solid #dc2626', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
             <span style={{ fontSize: '20px' }}>⏸</span>
@@ -2291,6 +2349,26 @@ export default function App() {
       try {
         await axios.patch(`${API}/touchpoints/${selectedJob.id}/5`, { fired_by: tech.email, notes: `Gate 1 submitted. ${data.totalChecked} checklist items completed.` }, { headers: { Authorization: `Bearer ${token}` } });
       } catch { console.warn('Touch 5 failed silently'); }
+
+      // Auto-log service event to asset if tech linked one
+      if (data.selectedAssetId) {
+        try {
+          const repairCost = (diagData?.parts || []).reduce((s, p) => s + (parseFloat(p.cost) || 0) * (p.qty || 1), 0);
+          const description = diagData?.diagnosis
+            ? diagData.diagnosis.substring(0, 120)
+            : (diagData?.cause || 'Service completed via work order');
+          await axios.post(`${API}/assets/${data.selectedAssetId}/service-log`, {
+            service_request_id: selectedJob.id,
+            repair_cost: repairCost,
+            service_date: new Date().toISOString().split('T')[0],
+            technician: `${tech.first_name} ${tech.last_name}`,
+            description,
+          }, { headers: { Authorization: `Bearer ${token}` } });
+        } catch (assetErr) {
+          console.warn('Asset service log failed silently:', assetErr.message);
+        }
+      }
+
     } catch (err) {
       if (!navigator.onLine) {
         // Queue gate1 submit for replay when back online
