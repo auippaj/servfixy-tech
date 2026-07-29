@@ -1341,7 +1341,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
 
   const autoChecked = {
     3: !!checkInData?.rvc,
-    4: diagData?.partsLogged === true || diagData?.partsNone === true,
+    4: (diagData?.parts?.length || 0) > 0 || diagData?.partsNone === true,
     5: (state.afterPhotos?.length || 0) >= 1,
   };
 
@@ -1372,7 +1372,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
       checked: checklistItems.map((_, i) => (i in autoChecked) ? autoChecked[i] : state.checked[i]),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkInData?.photos?.length, afterPhotos?.length, diagData?.system, diagData?.category, diagData?.cause, diagData?.diagnosis, checkInData?.rvc]);
+  }, [checkInData?.photos?.length, afterPhotos?.length, diagData?.system, diagData?.category, diagData?.cause, diagData?.diagnosis, checkInData?.rvc, diagData?.parts?.length]);
 
   // Until `checked` has been initialized (one tick after first mount),
   // render nothing. This is a plain conditional return AFTER all hooks
