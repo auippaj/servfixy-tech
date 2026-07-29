@@ -1308,12 +1308,10 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
 }
 
 // ── Gate1Screen ──
-// Revised checklist: 9 items (down from 14).
-// Removed: "No new issues identified", "Resident informed of outcome" (+ contact
-// picker), "Capital item flagged if applicable", and the digital signature step.
-// "After photos" is now auto-checked/greyed out, same as "Before photos".
-// GPS check-out no longer has its own row/button — it fires automatically
-// the moment the tech taps the final Submit button (see handleSubmitClick).
+// Revised checklist: 7 items (tech close-out). QA handles deeper verification.
+// Auto-checked: item 3 (resident notified — RVC), item 4 (parts log), item 5 (after photos).
+// Manual: items 0, 1, 2, 6.
+// GPS check-out fires automatically on Submit (see handleSubmitClick).
 //
 // State (checked / afterPhotos / gpsOut / etc.) is lifted to App so it
 // survives back-navigation. `checked` starts as null in initial state;
@@ -1324,33 +1322,27 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
   const isDeferred = diagData?.mode === 'deferred';
 
   const checklistItems = lang === 'es' ? [
-    'Fotos previas subidas (min 2)',
-    'Fotos posteriores subidas (min 2)',
-    'Causa raiz seleccionada',
-    'Diagnostico escrito (100+ caracteres)',
-    'Registro de piezas completo o marcado como ninguno',
-    'RVC verificado con el residente',
-    'Reparacion Cerrada o Aplazamiento Anotado',
-    'Area de trabajo limpia y restaurada',
-    'EPP adecuado usado durante el trabajo',
+    'Trabajo completado segun lo descrito',
+    'Area limpia y escombros retirados',
+    'Todos los puntos de acceso asegurados',
+    'Residente notificado o nota dejada',
+    'Piezas y materiales registrados',
+    'Foto del trabajo completado tomada',
+    'EPP retirado y equipo contabilizado',
   ] : [
-    'Before photos uploaded (min 2)',
-    'After photos uploaded (min 2)',
-    'Root cause selected from enum',
-    'Written diagnosis (100+ chars)',
-    'Parts log complete or marked none',
-    'RVC verified with resident',
-    'Repair Closed or Deferral Noted',
-    'Work area cleaned and restored',
-    'Proper PPE was used throughout job',
+    'Work completed as described',
+    'Area cleaned and debris removed',
+    'All access points secured',
+    'Resident notified or note left',
+    'Parts and materials logged',
+    'Photo of completed work taken',
+    'PPE removed and equipment accounted for',
   ];
 
   const autoChecked = {
-    0: (checkInData?.photos?.length || 0) >= 2,
-    1: (state.afterPhotos?.length || 0) >= 2,
-    2: isDeferred ? true : !!diagData?.system && !!diagData?.category && !!diagData?.cause,
-    3: isDeferred ? true : (diagData?.diagnosis?.trim().length || 0) >= 100,
-    5: !!checkInData?.rvc,
+    3: !!checkInData?.rvc,
+    4: diagData?.partsLogged === true || diagData?.partsNone === true,
+    5: (state.afterPhotos?.length || 0) >= 1,
   };
 
   // All hooks must run unconditionally, in the same order, on every render
@@ -1406,7 +1398,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
     });
   };
 
-  const requiredCount = checklistItems.length; // 9 for completed and deferred alike
+  const requiredCount = checklistItems.length; // 7 items — tech close-out
   const totalChecked = checked.filter(Boolean).length;
   const allChecked = totalChecked >= requiredCount;
   const progress = totalChecked / requiredCount;
