@@ -2153,6 +2153,7 @@ export default function App() {
   const handleLangChange = (l) => { setLang(l); localStorage.setItem('techLang', l); };
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [authReady, setAuthReady] = useState(false);
+  const [isOnCall, setIsOnCall] = useState(false);
 
   // Mark auth as ready after first render so we never flash a blank screen
   useEffect(() => { setAuthReady(true); }, []);
@@ -2163,6 +2164,20 @@ export default function App() {
     if (tech && t) {
       registerPushToken(t).catch(() => {});
     }
+  }, [tech]);
+
+  // Check if this tech is on-call today
+  useEffect(() => {
+    if (!tech) return;
+    const t = localStorage.getItem('techToken');
+    const today = new Date().toISOString().split('T')[0];
+    fetch(`${API}/schedule?date=${today}`, { headers: { Authorization: `Bearer ${t}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(rows => {
+        const onCall = Array.isArray(rows) && rows.some(r => r.technician_id === tech.id);
+        setIsOnCall(onCall);
+      })
+      .catch(() => {});
   }, [tech]);
   useEffect(() => {
     const goOnline = () => {
@@ -2385,7 +2400,10 @@ export default function App() {
         <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{getTitle()}</h1>
-            {screen === 'list' && <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>{t.certZone}</div>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+              {screen === 'list' && <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>{t.certZone}</div>}
+              {isOnCall && <div style={{ backgroundColor: '#ef4444', color: 'white', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '20px', letterSpacing: '0.5px', animation: 'sfxPulse 2s ease-in-out infinite' }}>?? ON CALL</div>}
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <LangToggle lang={lang} setLang={handleLangChange} />
