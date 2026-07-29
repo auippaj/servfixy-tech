@@ -21,14 +21,16 @@ const haptic = (pattern = [10]) => { try { navigator.vibrate && navigator.vibrat
 })();
 
 const statusColor = { pending_triage: '#1e3a5f', dispatched: '#3b82f6', scheduled: '#14B8A6', in_progress: '#f97316', pending_qa: '#7c3aed', completed: '#22c55e' };
-const tierColor = { T1: '#ef4444', T2: '#f97316', T3: '#3b82f6', T4: '#a855f7' };
-const tierLabel = { T1: 'Tier 1 - Emergency', T2: 'Tier 2 - Urgent', T3: 'Tier 3 - Routine', T4: 'Tier 4 - Cosmetic' };
-const tierLabelEs = { T1: 'Nivel 1 - Emergencia', T2: 'Nivel 2 - Urgente', T3: 'Nivel 3 - Rutina', T4: 'Nivel 4 - Cosmetico' };
+const tierColor = { LS: '#dc2626', '1': '#f97316', '2': '#facc15', '3': '#94a3b8' };
+const tierLabel = { LS: 'LS - Life Safety', '1': 'Tier 1 - Urgent', '2': 'Tier 2 - Moderate', '3': 'Tier 3 - Routine' };
+const tierLabelEs = { LS: 'LS - Seguridad Vital', '1': 'Nivel 1 - Urgente', '2': 'Nivel 2 - Moderado', '3': 'Nivel 3 - Rutina' };
 
 function getTier(job) {
-  if (job.priority === 'urgent') return 'T1';
-  if (job.priority === 'high') return 'T2';
-  if (job.priority === 'medium') return 'T3';
+  if (job.tier) return String(job.tier);
+  if (job.priority === 'emergency') return 'LS';
+  if (job.priority === 'urgent') return '1';
+  if (job.priority === 'high') return '2';
+  if (job.priority === 'medium') return '3';
   return 'T4';
 }
 
@@ -449,14 +451,14 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
         const tier = getTier(job);
         const tLabel = lang === 'es' ? tierLabelEs[tier] : tierLabel[tier];
         return (
-          <div key={job.id} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: tier === 'T1' ? '0 0 0 2px #ef4444, 0 1px 8px rgba(239,68,68,0.25)' : '0 1px 4px rgba(0,0,0,0.08)', cursor: 'pointer', borderLeft: `4px solid ${tierColor[tier]}` }} onClick={() => { haptic([10]); onSelectJob(job); }}>
+          <div key={job.id} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: tier === 'LS' ? '0 0 0 2px #dc2626, 0 1px 8px rgba(220,38,38,0.25)' : '0 1px 4px rgba(0,0,0,0.08)', cursor: 'pointer', borderLeft: `4px solid ${tierColor[tier]}` }} onClick={() => { haptic([10]); onSelectJob(job); }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
               <span style={{ fontWeight: '600', color: '#1B3A6B', fontSize: '15px' }}>{t.unit} {job.unit_number || ''}</span>
               <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700' }}>{tLabel}</span>
             </div>
             <p style={{ margin: '0 0 4px', color: '#374151', fontSize: '14px' }}>{job.description}</p>
             <div style={{ color: '#6b7280', fontSize: '12px', marginBottom: '8px' }}>{job.property_name}</div>
-            <SLATimer createdAt={job.created_at} slaHours={tier === 'T1' ? 2 : tier === 'T2' ? 24 : 72} />
+            <SLATimer createdAt={job.created_at} slaHours={tier === 'LS' ? 1 : tier === '1' ? 4 : tier === '2' ? 24 : 72} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
               <span style={{ backgroundColor: statusColor[job.status] || '#6b7280', color: 'white', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
                 {lang === 'es' ? ({ in_progress: 'En progreso', pending: 'Pendiente', assigned: 'Asignado', completed: 'Completado' }[job.status] || job.status) : job.status?.replace('_', ' ')}
@@ -1852,13 +1854,15 @@ function AdminDashboard({ tech, token, onLogout, lang, setLang }) {
       .finally(() => setJobsLoading(false));
   };
 
-  const tierColor = { T1: '#ef4444', T2: '#f97316', T3: '#3b82f6', T4: '#a855f7' };
+  const tierColor = { LS: '#dc2626', '1': '#f97316', '2': '#facc15', '3': '#94a3b8' };
   const statusColor = { pending_triage: '#1e3a5f', dispatched: '#3b82f6', scheduled: '#14B8A6', in_progress: '#f97316', pending_qa: '#7c3aed', completed: '#22c55e' };
 
   const getTier = (job) => {
-    if (job.priority === 'urgent') return 'T1';
-    if (job.priority === 'high') return 'T2';
-    if (job.priority === 'medium') return 'T3';
+    if (job.tier) return String(job.tier);
+    if (job.priority === 'emergency') return 'LS';
+    if (job.priority === 'urgent') return '1';
+    if (job.priority === 'high') return '2';
+    if (job.priority === 'medium') return '3';
     return 'T4';
   };
 
@@ -1917,13 +1921,13 @@ function AdminDashboard({ tech, token, onLogout, lang, setLang }) {
                   {(() => { const scheduled = ['dispatched','scheduled','in_progress','pending_qa','completed']; const prefix = scheduled.includes(job.status) ? 'SO' : 'SR'; const num = job.ticket_number ? String(job.ticket_number).padStart(4,'0') : '????'; return `${prefix}-${num}`; })()}
                 </span>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: '700' }}>{tier}</span>
+                  <span style={{ backgroundColor: tierColor[tier], color: tier === '2' ? '#000' : 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: '700' }}>{tierLabel[tier] || tier}</span>
                   <span style={{ backgroundColor: statusColor[job.status] || '#6b7280', color: 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: '600' }}>{job.status?.replace('_', ' ')}</span>
                 </div>
               </div>
               <div style={{ fontSize: '13px', color: '#374151', marginBottom: '4px' }}>{job.description}</div>
               <div style={{ fontSize: '12px', color: '#6b7280' }}>Unit {job.unit_number} · {job.property_name}</div>
-              <SLATimer createdAt={job.created_at} slaHours={tier === 'T1' ? 2 : tier === 'T2' ? 24 : 72} />
+              <SLATimer createdAt={job.created_at} slaHours={tier === 'LS' ? 1 : tier === '1' ? 4 : tier === '2' ? 24 : 72} />
             </div>
           );
         })}
@@ -2035,7 +2039,7 @@ function JobHistoryScreen({ tech, token, lang, onBack }) {
   const t = STRINGS[lang];
   const [jobs, setJobs] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
-  const tierColor = { T1: '#ef4444', T2: '#f97316', T3: '#3b82f6', T4: '#a855f7' };
+  const tierColor = { LS: '#dc2626', '1': '#f97316', '2': '#facc15', '3': '#94a3b8' };
   React.useEffect(() => {
     fetch(`${API}/technicians/${tech.id}/jobs?status=completed&limit=50`, {
       headers: { Authorization: `Bearer ${token}` }
