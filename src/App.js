@@ -307,15 +307,15 @@ function LoginScreen({ onLogin, lang, setLang }) {
     setLoading(false);
   };
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#1B3A6B', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '40px 36px', width: '100%', maxWidth: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#F0F4F8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '40px 36px', width: '100%', maxWidth: '480px', boxShadow: '0 4px 24px rgba(20,184,166,0.10)', border: '1px solid #e2e8f0' }}>
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <img src="https://i.imgur.com/eX28z4J.png" style={{ width: '320px', marginBottom: '12px' }} alt="Servfixy" />
-          <p style={{ color: '#6b7280', margin: '0 0 12px', fontSize: '14px' }}>{t.techPortal}</p>
+          <img src="https://i.imgur.com/cbDJcbx.png" style={{ width: '200px', marginBottom: '12px' }} alt="Servfixy" />
+          <p style={{ color: '#111827', margin: '0 0 12px', fontSize: '14px' }}>{t.techPortal}</p>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{ display: 'flex', backgroundColor: '#f0f4ff', borderRadius: '8px', overflow: 'hidden', fontSize: '12px' }}>
               {['en', 'es'].map(l => (
-                <button key={l} onClick={() => setLang(l)} style={{ padding: '5px 14px', border: 'none', cursor: 'pointer', backgroundColor: lang === l ? '#1B3A6B' : 'transparent', color: lang === l ? 'white' : '#6b7280', fontWeight: '700', fontSize: '12px' }}>
+                <button key={l} onClick={() => setLang(l)} style={{ padding: '5px 14px', border: 'none', cursor: 'pointer', backgroundColor: lang === l ? '#14B8A6' : 'transparent', color: lang === l ? 'white' : '#6b7280', fontWeight: '700', fontSize: '12px' }}>
                   {l.toUpperCase()}
                 </button>
               ))}
@@ -323,15 +323,15 @@ function LoginScreen({ onLogin, lang, setLang }) {
           </div>
         </div>
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>{t.email}</label>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>{t.email}</label>
           <input style={{ width: '100%', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', backgroundColor: '#f0f4ff', boxSizing: 'border-box' }} type="email" value={email} onChange={e => setEmail(e.target.value)} />
         </div>
         <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>{t.password}</label>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>{t.password}</label>
           <input style={{ width: '100%', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', backgroundColor: '#f0f4ff', boxSizing: 'border-box' }} type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
         </div>
         {error && <p style={{ color: '#ef4444', fontSize: '13px', margin: '0 0 12px' }}>{error}</p>}
-        <button style={{ width: '100%', padding: '13px', backgroundColor: '#1B3A6B', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }} onClick={handleLogin} disabled={loading}>
+        <button style={{ width: '100%', padding: '13px', backgroundColor: '#14B8A6', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }} onClick={handleLogin} disabled={loading}>
           {loading ? t.signingIn : t.signIn}
         </button>
       </div>
