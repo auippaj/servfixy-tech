@@ -456,7 +456,7 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
               <span style={{ fontWeight: '600', color: '#1B3A6B', fontSize: '15px' }}>{t.unit} {job.unit_number || ''}</span>
               <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700' }}>{tLabel}</span>
             </div>
-            <p style={{ margin: '0 0 4px', color: '#374151', fontSize: '14px' }}>{job.description}</p>
+            <p style={{ margin: '0 0 4px', color: '#111827', fontSize: '14px' }}>{job.description}</p>
             <div style={{ color: '#6b7280', fontSize: '12px', marginBottom: '8px' }}>{job.property_name}</div>
             <SLATimer createdAt={job.created_at} slaHours={tier === 'LS' ? 1 : tier === '1' ? 4 : tier === '2' ? 24 : 72} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
@@ -860,14 +860,14 @@ const handleHvacAnalysis = async () => {
               <div style={{ fontSize: '17px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px', textAlign: 'center' }}>{lang === 'es' ? 'Diagnostico HVAC' : 'HVAC Diagnostics'}</div>
               <div style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', marginBottom: '20px' }}>{lang === 'es' ? 'Conecta manometros y registra lecturas' : 'Connect gauges and record all readings'}</div>
               <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de refrigerante' : 'Refrigerant Type'} <span style={{ color: '#ef4444' }}>*</span></label>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#111827', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de refrigerante' : 'Refrigerant Type'} <span style={{ color: '#ef4444' }}>*</span></label>
                 <select value={refrigerantType} onChange={e => setState({ refrigerantType: e.target.value })} style={{ width: '100%', padding: '12px', border: `2px solid ${refrigerantType ? '#14B8A6' : '#e5e7eb'}`, borderRadius: '10px', fontSize: '15px', fontWeight: '700', color: '#1B3A6B', backgroundColor: 'white', boxSizing: 'border-box' }}>
                   <option value="">{lang === 'es' ? 'Seleccionar refrigerante...' : 'Select refrigerant...'}</option>
                   {['R-22', 'R-410A', 'R-32', 'R-454B', 'R-407C', 'R-134a'].map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de valvula' : 'Expansion Valve'}</label>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#111827', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de valvula' : 'Expansion Valve'}</label>
                 <div style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e5e7eb' }}>
                   {['TXV', 'Fixed Orifice'].map(v => (
                     <button key={v} onClick={() => setState({ expansionValve: v })} style={{ flex: 1, padding: '10px', border: 'none', cursor: 'pointer', backgroundColor: expansionValve === v ? '#1B3A6B' : '#f9fafb', color: expansionValve === v ? 'white' : '#6b7280', fontWeight: '700', fontSize: '13px' }}>
@@ -878,7 +878,7 @@ const handleHvacAnalysis = async () => {
                 <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>{lang === 'es' ? 'TXV es el predeterminado — cambia si la unidad usa orificio fijo' : 'TXV is default — change if unit uses fixed orifice'}</div>
               </div>
               <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginBottom: '8px' }}>
-                <div style={{ fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔵 {lang === 'es' ? 'Lado bajo (succion)' : 'Low Side (Suction)'}</div>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#111827', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔵 {lang === 'es' ? 'Lado bajo (succion)' : 'Low Side (Suction)'}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{lang === 'es' ? 'Presion (PSI)' : 'Pressure (PSI)'}</label>
@@ -904,7 +904,7 @@ const handleHvacAnalysis = async () => {
                 )}
               </div>
               <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginTop: '16px' }}>
-                <div style={{ fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔴 {lang === 'es' ? 'Lado alto (descarga)' : 'High Side (Discharge)'}</div>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#111827', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔴 {lang === 'es' ? 'Lado alto (descarga)' : 'High Side (Discharge)'}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>{lang === 'es' ? 'Presion (PSI)' : 'Pressure (PSI)'}</label>
@@ -1107,7 +1107,7 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
 
         {/* ── Completed / Deferred Toggle ── */}
         <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '12px' }}>
-          <div style={{ fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ fontSize: '13px', fontWeight: '700', color: '#111827', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             {lang === 'es' ? 'Estado del trabajo' : 'Job Outcome'}
           </div>
           <div style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
@@ -1262,7 +1262,7 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
                   {parts.map(p => (
                     <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', backgroundColor: '#f9fafb', borderRadius: '8px', marginBottom: '6px' }}>
                       <div>
-                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>{p.name}</div>
+                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>{p.name}</div>
                         <div style={{ fontSize: '12px', color: '#6b7280' }}>{t.qty}: {p.qty} {p.cost ? `- $${(parseFloat(p.cost) * p.qty).toFixed(2)}` : ''}</div>
                       </div>
                       <button onClick={() => removePart(p.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}>×</button>
@@ -1458,7 +1458,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
 
       <div style={{ backgroundColor: 'white', padding: '12px 16px', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <span style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>{lang === 'es' ? 'Lista de verificacion' : 'Completion checklist'}</span>
+          <span style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>{lang === 'es' ? 'Lista de verificacion' : 'Completion checklist'}</span>
           <span style={{ fontSize: '13px', fontWeight: '700', color: allChecked ? '#22c55e' : '#1B3A6B' }}>{totalChecked} / {requiredCount} {allChecked ? '✓' : ''}</span>
         </div>
         <div style={{ height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
@@ -1606,7 +1606,7 @@ function SubmittedScreen({ job, tech, token, checkInData, diagData, gate1Data, o
           ].map(([label, val]) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f3f4f6' }}>
               <span style={{ fontSize: '13px', color: '#6b7280' }}>{label}</span>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>{val}</span>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>{val}</span>
             </div>
           ))}
         </div>
@@ -1730,7 +1730,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
           onClick={() => haptic([10])}>
           <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📍 {t.location} — Tap to Navigate</div>
           <div style={{ fontWeight: '700', color: '#1B3A6B' }}>{t.unit} {job.unit_number || ''}</div>
-          <div style={{ color: '#374151', fontSize: '13px' }}>{job.property_name}</div>
+          <div style={{ color: '#111827', fontSize: '13px' }}>{job.property_name}</div>
         </a>
         <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '6px' }}>{t.currentStatus}</div>
         <span style={{ backgroundColor: statusColor[job.status] || '#6b7280', color: 'white', padding: '3px 8px', borderRadius: '12px', fontSize: '13px', fontWeight: '600' }}>
@@ -1746,7 +1746,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
         </div>
       )}
       <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-        <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>{t.addNote}</div>
+        <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#111827' }}>{t.addNote}</div>
         <textarea style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', marginBottom: '16px', height: '80px', resize: 'none' }} placeholder={t.notesPlaceholder} value={note} onChange={e => setNote(e.target.value)} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {(job.status === 'dispatched' || job.status === 'scheduled') && (
@@ -2121,7 +2121,7 @@ function JobHistoryScreen({ tech, token, lang, onBack }) {
               <span style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '14px' }}>{t.unit} {job.unit_number || ''}</span>
               <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '700' }}>✓ Complete</span>
             </div>
-            <p style={{ margin: '0 0 4px', color: '#374151', fontSize: '13px' }}>{job.description}</p>
+            <p style={{ margin: '0 0 4px', color: '#111827', fontSize: '13px' }}>{job.description}</p>
             <div style={{ color: '#9ca3af', fontSize: '11px' }}>
               {job.property_name} · {job.updated_at ? new Date(job.updated_at).toLocaleDateString() : ''}
             </div>
