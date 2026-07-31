@@ -307,33 +307,47 @@ function LoginScreen({ onLogin, lang, setLang }) {
     setLoading(false);
   };
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F0F4F8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '40px 36px', width: '100%', maxWidth: '480px', boxShadow: '0 4px 24px rgba(20,184,166,0.10)', border: '1px solid #e2e8f0' }}>
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <img src="https://i.imgur.com/OKIqq0K.png" style={{ width: '200px', marginBottom: '12px' }} alt="Servfixy" />
-          <p style={{ color: '#111827', margin: '0 0 12px', fontSize: '14px' }}>{t.techPortal}</p>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <div style={{ display: 'flex', backgroundColor: '#f0f4ff', borderRadius: '8px', overflow: 'hidden', fontSize: '12px' }}>
-              {['en', 'es'].map(l => (
-                <button key={l} onClick={() => setLang(l)} style={{ padding: '5px 14px', border: 'none', cursor: 'pointer', backgroundColor: lang === l ? '#14B8A6' : 'transparent', color: lang === l ? 'white' : '#6b7280', fontWeight: '700', fontSize: '12px' }}>
-                  {l.toUpperCase()}
-                </button>
-              ))}
+    <div style={{ minHeight: '100vh', display: 'flex', fontFamily: 'Arial, sans-serif' }}>
+      {/* Left navy panel */}
+      <div style={{ width: '400px', minWidth: '400px', backgroundColor: '#1B3A6B', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 40px' }}>
+        <img src="https://i.imgur.com/OKIqq0K.png" alt="Servfixy" style={{ width: '200px', marginBottom: '28px' }} />
+        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', textAlign: 'center', marginBottom: '40px' }}>Field Technician Portal</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+          {['GPS-verified job check-in', '5-Touch communication protocol', 'HVAC diagnostics and gauges', 'Gate 1 QA closeout workflow'].map(item => (
+            <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#14B8A6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ color: '#fff', fontSize: '11px', fontWeight: '700' }}>✓</span>
+              </div>
+              <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>{item}</span>
             </div>
+          ))}
+        </div>
+        <div style={{ marginTop: '40px', display: 'flex', gap: '6px' }}>
+          {['en', 'es'].map(l => (
+            <button key={l} onClick={() => setLang(l)} style={{ padding: '6px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: lang === l ? '#14B8A6' : 'rgba(255,255,255,0.1)', color: lang === l ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: '700', fontSize: '12px' }}>
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Right login panel */}
+      <div style={{ flex: 1, backgroundColor: '#F0F4F8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px' }}>
+        <div style={{ width: '100%', maxWidth: '420px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '6px' }}>{t.techPortal}</h1>
+          <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '32px' }}>Sign in to view your assigned work orders</p>
+          {error && <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#991b1b', marginBottom: '20px' }}>{error}</div>}
+          <div style={{ marginBottom: '18px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>{t.email}</label>
+            <input style={{ width: '100%', padding: '12px 14px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', color: '#111827', backgroundColor: '#fff', boxSizing: 'border-box' }} type="email" value={email} onChange={e => setEmail(e.target.value)} />
           </div>
+          <div style={{ marginBottom: '28px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>{t.password}</label>
+            <input style={{ width: '100%', padding: '12px 14px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', color: '#111827', backgroundColor: '#fff', boxSizing: 'border-box' }} type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+          </div>
+          <button style={{ width: '100%', padding: '13px', backgroundColor: '#1B3A6B', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }} onClick={handleLogin} disabled={loading}>
+            {loading ? t.signingIn : t.signIn}
+          </button>
         </div>
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>{t.email}</label>
-          <input style={{ width: '100%', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', backgroundColor: '#f0f4ff', boxSizing: 'border-box' }} type="email" value={email} onChange={e => setEmail(e.target.value)} />
-        </div>
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>{t.password}</label>
-          <input style={{ width: '100%', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', backgroundColor: '#f0f4ff', boxSizing: 'border-box' }} type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-        </div>
-        {error && <p style={{ color: '#ef4444', fontSize: '13px', margin: '0 0 12px' }}>{error}</p>}
-        <button style={{ width: '100%', padding: '13px', backgroundColor: '#14B8A6', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }} onClick={handleLogin} disabled={loading}>
-          {loading ? t.signingIn : t.signIn}
-        </button>
       </div>
     </div>
   );
