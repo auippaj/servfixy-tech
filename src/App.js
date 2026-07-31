@@ -2851,3 +2851,150 @@ export default function App() {
     </div>
   );
 }
+
+function ScoreboardScreen({ tech, token, myScore, lang, onBack }) {
+  const [leaderboard, setLeaderboard] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [month, setMonth] = React.useState(() => new Date().toISOString().slice(0, 7) + '-01');
+
+  React.useEffect(() => {
+    setLoading(true);
+    fetch(`https://servfixy-production.up.railway.app/api/gamification/leaderboard?month=${month}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => { setLeaderboard(data.leaderboard || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [token, month]);
+
+  const monthLabel = new Date(month).toLocaleString('default', { month: 'long', year: 'numeric' });
+  const medalFor = (rank) => rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+  const barColor = (val) => val >= 80 ? '#14B8A6' : val >= 60 ? '#3b82f6' : val >= 40 ? '#f97316' : '#ef4444';
+  const trendFor = (row) => {
+    if (!row.prev_rank) return null;
+    const diff = row.prev_rank - row.rank;
+    if (diff > 0) return <span style={{ color: '#14B8A6', fontSize: '11px', fontWeight: '700' }}>▲{diff}</span>;
+    if (diff < 0) return <span style={{ color: '#ef4444', fontSize: '11px', fontWeight: '700' }}>▼{Math.abs(diff)}</span>;
+    return <span style={{ color: '#94a3b8', fontSize: '11px' }}>—</span>;
+  };
+
+  return (
+    <div style={{ padding: '24px', paddingBottom: '80px', overflowY: 'auto', height: 'calc(100vh - 60px)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#111827' }}>🏆 Fixy Score Leaderboard</h2>
+          <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '2px' }}>{monthLabel} · Top Tech Championship</div>
+        </div>
+        <select value={month} onChange={e => setMonth(e.target.value)}
+          style={{ border: '1px solid #e5e7eb', borderRadius: '8px', padding: '6px 10px', fontSize: '13px', color: '#374151', backgroundColor: '#fff' }}>
+          {[0,1,2,3].map(i => {
+            const d = new Date(); d.setMonth(d.getMonth() - i);
+            const val = d.toISOString().slice(0, 7) + '-01';
+            return <option key={val} value={val}>{d.toLocaleString('default', { month: 'long', year: 'numeric' })}</option>;
+          })}
+        </select>
+      </div>
+
+      <div style={{ background: 'linear-gradient(135deg, #1B3A6B, #14B8A6)', borderRadius: '14px', padding: '16px 20px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ color: '#fff' }}>
+          <div style={{ fontSize: '11px', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Year-End Prizes</div>
+          <div style={{ fontSize: '13px', fontWeight: '700' }}>🥇 $15,000 &nbsp;·&nbsp; 🥈 $10,000 &nbsp;·&nbsp; 🥉 $5,000</div>
+        </div>
+        <div style={{ textAlign: 'right', color: '#fff' }}>
+          <div style={{ fontSize: '11px', opacity: 0.7 }}>Your rank</div>
+          <div style={{ fontSize: '28px', fontWeight: '800' }}>{myScore?.score ? medalFor(myScore.score.rank) : '—'}</div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>Calculating scores...</div>
+      ) : leaderboard.length === 0 ? (
+        <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: '32px', marginBottom: '10px' }}>📊</div>
+          <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>No scores yet this month</div>
+          <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>Complete jobs to start earning Fixy Score points</div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {leaderboard.map((row) => {
+            const isMe = row.technician_id === tech.id;
+            return (
+              <div key={row.technician_id}
+                style={{ backgroundColor: isMe ? '#f0fdf4' : '#fff', border: isMe ? '2px solid #14B8A6' : '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ fontSize: row.rank <= 3 ? '28px' : '16px', fontWeight: '800', color: '#1B3A6B', minWidth: '36px', textAlign: 'center' }}>
+                    {medalFor(row.rank)}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: '700', color: '#111827' }}>
+                        {row.first_name} {row.last_name}
+                        {isMe && <span style={{ marginLeft: '6px', fontSize: '11px', backgroundColor: '#14B8A6', color: '#fff', padding: '1px 7px', borderRadius: '6px' }}>YOU</span>}
+                      </span>
+                      {trendFor(row)}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+                      {row.certification_level || 'S1'} · {row.jobs_completed} jobs · {Array.isArray(row.badges) ? row.badges.slice(0,4).join(' ') : ''}
+                    </div>
+                    <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+                      {[['Quality', row.quality_score], ['Compliance', row.compliance_score], ['Response', row.responsiveness_score]].map(([label, val]) => (
+                        <div key={label}>
+                          <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '2px' }}>{label}</div>
+                          <div style={{ height: '4px', backgroundColor: '#f1f5f9', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${Math.min(100, parseFloat(val))}%`, backgroundColor: barColor(parseFloat(val)), borderRadius: '2px' }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '22px', fontWeight: '800', color: '#1B3A6B' }}>{row.fixy_score}</div>
+                    <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>pts</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {myScore?.score && (
+        <div style={{ marginTop: '24px', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
+          <div style={{ fontSize: '13px', fontWeight: '700', color: '#111827', marginBottom: '14px' }}>📈 Your Score Breakdown</div>
+          {[
+            ['⭐ Quality (40%)', myScore.score.quality_score],
+            ['✅ Compliance (25%)', myScore.score.compliance_score],
+            ['⚡ Responsiveness (20%)', myScore.score.responsiveness_score],
+            ['📦 Throughput (10%)', myScore.score.throughput_score],
+            ['📚 Development (5%)', myScore.score.development_score],
+          ].map(([label, val]) => (
+            <div key={label} style={{ marginBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                <span style={{ fontSize: '12px', color: '#374151' }}>{label}</span>
+                <span style={{ fontSize: '12px', fontWeight: '700', color: '#1B3A6B' }}>{parseFloat(val).toFixed(0)}</span>
+              </div>
+              <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${Math.min(100, parseFloat(val))}%`, backgroundColor: barColor(parseFloat(val)), borderRadius: '3px' }} />
+              </div>
+            </div>
+          ))}
+          {myScore.badges?.length > 0 && (
+            <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid #f1f5f9' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#374151', marginBottom: '8px' }}>Your Badges</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {myScore.badges.map((b, i) => (
+                  <div key={i} style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '4px 10px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>{b.badge_icon}</span>
+                    <span style={{ color: '#15803d', fontWeight: '600' }}>{b.badge_label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
