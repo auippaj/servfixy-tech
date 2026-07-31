@@ -445,7 +445,7 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
     </div>
   );
   return (
-    <div style={{ paddingBottom: '80px' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={handleTouchMove}>
+    <div style={{ paddingBottom: '60px', padding: '0 0 60px 0' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={handleTouchMove}>
       {isPulling && <div style={{ textAlign: 'center', padding: '12px', color: '#14B8A6', fontSize: '13px', fontWeight: '600' }}>↓ Release to refresh</div>}
       <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -491,10 +491,10 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
           </div>
         );
       })}
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', backgroundColor: '#1B3A6B', color: 'white', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-        <button onClick={onShow911} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
-        <span style={{ backgroundColor: '#14B8A6', padding: '3px 10px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
-        <button onClick={onSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
+      <div style={{ position: 'fixed', bottom: 0, left: '220px', right: 0, backgroundColor: '#1B3A6B', color: 'white', padding: '8px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', zIndex: 50 }}>
+        <button onClick={onShow911} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
+        <span style={{ backgroundColor: '#14B8A6', padding: '3px 12px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
+        <button onClick={onSupportCall} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>📞 Support</button>
       </div>
     </div>
   );
