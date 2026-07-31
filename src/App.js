@@ -2310,7 +2310,7 @@ function JobHistoryScreen({ tech, token, lang, onBack }) {
   );
 }
 
-export default function App() {
+function App() {
   const [tech, setTech] = useState(() => { const s = localStorage.getItem('techUser'); return s ? JSON.parse(s) : null; });
   const [token, setToken] = useState(() => localStorage.getItem('techToken') || '');
   const [selectedJob, setSelectedJob] = useState(null);
