@@ -286,6 +286,7 @@ function LangToggle({ lang, setLang }) {
           {l.toUpperCase()}
         </button>
       ))}
+      </div>
     </div>
   );
 }
@@ -2481,24 +2482,77 @@ export default function App() {
     setScreen('checkin');
   };
 
+  const techInitials = (tech.first_name?.[0] || '') + (tech.last_name?.[0] || '');
+  const sidebarNavItems = [
+    { key: 'list', label: 'My Jobs', icon: '🔧' },
+    { key: 'turn_tasks', label: 'Turn Tasks', icon: '🏠' },
+    { key: 'history', label: 'Job History', icon: '🕐' },
+    { key: 'tasks', label: 'Tasks', icon: '✅' },
+  ];
+
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: '430px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      <OfflineBanner />
-      {screen !== 'checkin' && screen !== 'diagnosis' && (
-        <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{getTitle()}</h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
-              {screen === 'list' && <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>{t.certZone}</div>}
-              {isOnCall && <div style={{ backgroundColor: '#ef4444', color: 'white', fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '20px', letterSpacing: '0.5px', animation: 'sfxPulse 2s ease-in-out infinite' }}>?? ON CALL</div>}
-            </div>
+    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif', backgroundColor: '#F0F4F8' }}>
+      {/* Sidebar — hidden on checkin/diagnosis/gate1 screens */}
+      {screen !== 'checkin' && screen !== 'diagnosis' && screen !== 'gate1' && (
+        <div style={{ width: '220px', minWidth: '220px', backgroundColor: '#1B3A6B', display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 100 }}>
+          {/* Logo */}
+          <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+            <img src="https://i.imgur.com/OKIqq0K.png" alt="Servfixy" style={{ width: '150px', height: 'auto' }} />
+            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '10px', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Technician Portal</div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <LangToggle lang={lang} setLang={handleLangChange} />
-            <div style={{ width: '34px', height: '34px', backgroundColor: '#14B8A6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '14px' }}>
-              {tech.first_name?.[0]}{tech.last_name?.[0]}
+          {/* Tech info */}
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '36px', height: '36px', backgroundColor: '#14B8A6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '13px', color: '#fff', flexShrink: 0 }}>
+                {techInitials}
+              </div>
+              <div>
+                <div style={{ color: '#fff', fontSize: '13px', fontWeight: '600' }}>{tech.first_name} {tech.last_name}</div>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '11px' }}>{tech.certification_level || 'S1 Specialist'}</div>
+              </div>
             </div>
-            <button style={{ background: 'none', border: '1px solid rgba(255,255,255,0.4)', color: 'white', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }} onClick={handleLogout}>{t.logOut}</button>
+            {isOnCall && (
+              <div style={{ marginTop: '10px', backgroundColor: '#ef4444', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '3px 10px', borderRadius: '20px', display: 'inline-block', letterSpacing: '0.5px' }}>ON CALL</div>
+            )}
+          </div>
+          {/* Nav */}
+          <nav style={{ flex: 1, padding: '10px 8px', overflowY: 'auto' }}>
+            {sidebarNavItems.map(item => {
+              const isActive = screen === item.key;
+              return (
+                <button key={item.key} onClick={() => { haptic([10]); setScreen(item.key); setSelectedJob(null); }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px', backgroundColor: isActive ? 'rgba(20,184,166,0.15)' : 'transparent', color: isActive ? '#14B8A6' : 'rgba(255,255,255,0.65)', fontSize: '13px', fontWeight: isActive ? '600' : '400', textAlign: 'left' }}>
+                  <span style={{ fontSize: '15px' }}>{item.icon}</span>
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+          {/* Lang toggle + logout */}
+          <div style={{ padding: '12px 10px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {['en', 'es'].map(l => (
+                <button key={l} onClick={() => handleLangChange(l)} style={{ flex: 1, padding: '5px', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: lang === l ? '#14B8A6' : 'rgba(255,255,255,0.1)', color: lang === l ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: '700', fontSize: '11px' }}>
+                  {l.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <button onClick={handleLogout} style={{ width: '100%', padding: '9px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: 'rgba(255,255,255,0.55)', fontSize: '12px', cursor: 'pointer' }}>{t.logOut}</button>
+          </div>
+        </div>
+      )}
+      {/* Main content area */}
+      <div style={{ marginLeft: screen !== 'checkin' && screen !== 'diagnosis' && screen !== 'gate1' ? '220px' : '0', flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <OfflineBanner />
+      {screen !== 'checkin' && screen !== 'diagnosis' && screen !== 'gate1' && (
+        <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '16px', fontWeight: '700', color: '#111827' }}>{getTitle()}</span>
+            {screen === 'list' && <span style={{ fontSize: '12px', color: '#6b7280', background: '#F0F4F8', padding: '3px 10px', borderRadius: '20px' }}>{t.certZone}</span>}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
+            <span style={{ fontSize: '12px', color: '#6b7280' }}>On duty</span>
           </div>
         </div>
       )}
