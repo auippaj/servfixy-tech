@@ -2404,11 +2404,17 @@ function App() {
   useEffect(() => {
     if (!tech) return;
     const t = localStorage.getItem('techToken');
-    const today = new Date().toISOString().split('T')[0];
-    fetch(`${API}/schedule?date=${today}`, { headers: { Authorization: `Bearer ${t}` } })
-      .then(r => r.ok ? r.json() : [])
-      .then(rows => {
-        const onCall = Array.isArray(rows) && rows.some(r => r.technician_id === tech.id);
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    // Schedule route requires property_id — skip gracefully if not available
+    if (!tech.property_id) return;
+    fetch(`${API}/schedule?property_id=${tech.property_id}&month=${month}&year=${year}`, { headers: { Authorization: `Bearer ${t}` } })
+      .then(r => r.ok ? r.json() : { schedules: [] })
+      .then(data => {
+        const rows = Array.isArray(data) ? data : (data.schedules || []);
+        const today = now.toISOString().split('T')[0];
+        const onCall = rows.some(r => r.technician_id === tech.id && r.date === today);
         setIsOnCall(onCall);
       })
       .catch(() => {});
