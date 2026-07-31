@@ -2327,6 +2327,8 @@ export default function App() {
   const [showSupportUnavailable, setShowSupportUnavailable] = useState(false);
   const [myTurnTasks, setMyTurnTasks] = useState([]);
   const [myTasksLoading, setMyTasksLoading] = useState(false);
+  const [myScore, setMyScore] = useState(null);
+  const [rankNotif, setRankNotif] = useState(null); // 'up' | 'down' | null
 
   const handleSupportVideoCall = async () => {
     try {
@@ -2461,10 +2463,24 @@ export default function App() {
     const t = localStorage.getItem('techToken');
     setTech(techData);
     setToken(t);
-    // Register FCM push token
     if (t) registerPushToken(t).catch(() => {});
-    // Welcome message
     speakWelcome(techData?.first_name, techData?.last_name);
+    // Fetch gamification score and show rank change notification
+    if (techData?.id && t) {
+      fetch(`https://servfixy-production.up.railway.app/api/gamification/my-score/${techData.id}`, {
+        headers: { Authorization: `Bearer ${t}` }
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.score) {
+            setMyScore(data);
+            if (data.rank_change > 0) setRankNotif('up');
+            else if (data.rank_change < 0) setRankNotif('down');
+            setTimeout(() => setRankNotif(null), 5000);
+          }
+        })
+        .catch(() => {});
+    }
   };
   useEffect(() => {
     if (screen === 'list' && tech && token) {
@@ -2651,6 +2667,7 @@ export default function App() {
     { key: 'turn_tasks', label: 'Turn Tasks', icon: '🏠' },
     { key: 'history', label: 'Job History', icon: '🕐' },
     { key: 'tasks', label: 'Tasks', icon: '✅' },
+    { key: 'scoreboard', label: 'Scoreboard', icon: '🏆' },
   ];
 
   return (
@@ -2674,8 +2691,21 @@ export default function App() {
                 <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '11px' }}>{tech.certification_level || 'S1 Specialist'}</div>
               </div>
             </div>
+            {myScore?.score && (
+              <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '13px' }}>
+                  {myScore.score.rank === 1 ? '🥇' : myScore.score.rank === 2 ? '🥈' : myScore.score.rank === 3 ? '🥉' : '🏅'}
+                </span>
+                <span style={{ color: '#14B8A6', fontSize: '12px', fontWeight: '700' }}>
+                  #{myScore.score.rank} of {myScore.total_techs}
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
+                  {myScore.score.fixy_score} pts
+                </span>
+              </div>
+            )}
             {isOnCall && (
-              <div style={{ marginTop: '10px', backgroundColor: '#ef4444', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '3px 10px', borderRadius: '20px', display: 'inline-block', letterSpacing: '0.5px' }}>ON CALL</div>
+              <div style={{ marginTop: '8px', backgroundColor: '#ef4444', color: '#fff', fontSize: '10px', fontWeight: '800', padding: '3px 10px', borderRadius: '20px', display: 'inline-block', letterSpacing: '0.5px' }}>ON CALL</div>
             )}
           </div>
           {/* Nav */}
@@ -2757,6 +2787,24 @@ export default function App() {
         );
       })()}
       {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} onStartCheckin={(job) => { setSelectedJob(job); resetJobState(); setScreen('checkin'); }} />}
+      {screen === 'scoreboard' && <ScoreboardScreen tech={tech} token={token} myScore={myScore} lang={lang} onBack={() => setScreen('list')} />}
+      {/* Rank change notification */}
+      {rankNotif && (
+        <div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', zIndex: 9998, animation: 'sfxPulse 0.5s ease-in-out' }}>
+          <div style={{ backgroundColor: rankNotif === 'up' ? '#14B8A6' : '#f97316', color: '#fff', borderRadius: '16px', padding: '16px 28px', textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', minWidth: '260px' }}>
+            <div style={{ fontSize: '36px', marginBottom: '6px' }}>{rankNotif === 'up' ? '👍' : '💪'}</div>
+            <div style={{ fontSize: '16px', fontWeight: '800', marginBottom: '4px' }}>
+              {rankNotif === 'up' ? `You moved up to #${myScore?.score?.rank}!` : `You're at #${myScore?.score?.rank} — keep pushing!`}
+            </div>
+            <div style={{ fontSize: '13px', opacity: 0.85 }}>
+              {rankNotif === 'up' ? 'Great work — the team sees it.' : 'Every job closed right moves you up.'}
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '14px', fontWeight: '700' }}>
+              Fixy Score: {myScore?.score?.fixy_score} pts
+            </div>
+          </div>
+        </div>
+      )}
       {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={handleBeginCheckIn} onVideoCall={handleVideoCall} lang={lang} />}
       {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} state={checkInState} setState={updateCheckInState} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
       {screen === 'diagnosis' && selectedJob && <DiagnosisScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} onComplete={handleDiagnosisComplete} onBack={() => setScreen('checkin')} lang={lang} onVideoCall={handleVideoCall} checkedIn={selectedJob.tech_checked_in} state={diagnosisState} setState={updateDiagnosisState} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
