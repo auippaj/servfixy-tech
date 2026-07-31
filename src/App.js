@@ -2469,6 +2469,7 @@ function App() {
     const t = localStorage.getItem('techToken');
     setTech(techData);
     setToken(t);
+    setScreen('list');
     if (t) registerPushToken(t).catch(() => {});
     speakWelcome(techData?.first_name, techData?.last_name);
     // Fetch gamification score and show rank change notification
@@ -2793,6 +2794,63 @@ function App() {
         );
       })()}
       {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} onStartCheckin={(job) => { setSelectedJob(job); resetJobState(); setScreen('checkin'); }} />}
+      {screen === 'turn_tasks' && (
+        <div style={{ padding: '24px' }}>
+          <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '800', color: '#111827' }}>🏠 Turn Tasks</h2>
+          {myTasksLoading ? (
+            <div style={{ color: '#94a3b8', fontSize: '13px' }}>Loading turn tasks...</div>
+          ) : myTurnTasks.length === 0 ? (
+            <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '48px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '32px', marginBottom: '10px' }}>🏠</div>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>No turn tasks assigned</div>
+              <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>Your assigned unit turns will appear here.</div>
+            </div>
+          ) : (() => {
+            const byTurn = myTurnTasks.reduce((acc, t) => {
+              if (!acc[t.turn_id]) acc[t.turn_id] = { turn_id: t.turn_id, unit_number: t.unit_number, floorplan_name: t.floorplan_name, projected_ready_date: t.projected_ready_date, tasks: [] };
+              acc[t.turn_id].tasks.push(t);
+              return acc;
+            }, {});
+            return Object.values(byTurn).map(group => {
+              const pending = group.tasks.filter(t => t.status === 'pending').length;
+              const done = group.tasks.filter(t => t.status === 'completed').length;
+              const fakeTurn = { id: group.turn_id, unit_number: group.unit_number, floorplan_name: group.floorplan_name, floorplan_type: group.floorplan_name };
+              return (
+                <div key={group.turn_id} onClick={() => { setSelectedTurn(fakeTurn); setScreen('turn_tasks_detail'); }}
+                  style={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', marginBottom: '12px', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '15px' }}>Unit {group.unit_number}</span>
+                    <span style={{ fontSize: '12px', color: '#6b7280' }}>{done}/{group.tasks.length} complete</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>{group.floorplan_name}</div>
+                  <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${group.tasks.length > 0 ? (done/group.tasks.length)*100 : 0}%`, backgroundColor: '#14B8A6', borderRadius: '3px' }} />
+                  </div>
+                  {pending > 0 && <div style={{ marginTop: '8px', fontSize: '12px', color: '#f97316', fontWeight: '600' }}>{pending} task{pending > 1 ? 's' : ''} pending</div>}
+                </div>
+              );
+            });
+          })()}
+        </div>
+      )}
+      {screen === 'history' && (
+        <div style={{ padding: '24px' }}>
+          <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '800', color: '#111827' }}>🕐 Job History</h2>
+          <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0', color: '#94a3b8' }}>
+            <div style={{ fontSize: '32px', marginBottom: '10px' }}>🕐</div>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>Completed jobs appear here</div>
+          </div>
+        </div>
+      )}
+      {screen === 'tasks' && (
+        <div style={{ padding: '24px' }}>
+          <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '800', color: '#111827' }}>✅ Tasks</h2>
+          <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0', color: '#94a3b8' }}>
+            <div style={{ fontSize: '32px', marginBottom: '10px' }}>✅</div>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>Your tasks will appear here</div>
+          </div>
+        </div>
+      )}
       {screen === 'scoreboard' && <ScoreboardScreen tech={tech} token={token} myScore={myScore} lang={lang} onBack={() => setScreen('list')} />}
       {/* Rank change notification */}
       {rankNotif && (
