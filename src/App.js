@@ -286,7 +286,6 @@ function LangToggle({ lang, setLang }) {
           {l.toUpperCase()}
         </button>
       ))}
-      </div>
     </div>
   );
 }
