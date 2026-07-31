@@ -430,67 +430,93 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
     if (pullStartY !== null && e.touches[0].clientY - pullStartY > 40) setIsPulling(true);
   };
 
+  const [selectedJobId, setSelectedJobId] = React.useState(null);
+  const selectedJob = jobs.find(j => j.id === selectedJobId) || null;
+
   if (loading) return (
-    <div style={{ paddingBottom: '80px' }}>
-      {[1,2,3].map(i => (
-        <div key={i} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', borderLeft: '4px solid #e5e7eb' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <div style={{ width: '80px', height: '16px', backgroundColor: '#f0f4ff', borderRadius: '6px', animation: 'pulse 1.5s ease-in-out infinite' }} />
-            <div style={{ width: '90px', height: '16px', backgroundColor: '#f0f4ff', borderRadius: '6px' }} />
-          </div>
-          <div style={{ width: '100%', height: '14px', backgroundColor: '#f0f4ff', borderRadius: '6px', marginBottom: '8px' }} />
-          <div style={{ width: '60%', height: '12px', backgroundColor: '#f0f4ff', borderRadius: '6px' }} />
-        </div>
-      ))}
+    <div style={{ display: 'flex', height: 'calc(100vh - 60px)' }}>
+      <div style={{ width: '360px', minWidth: '360px', borderRight: '1px solid #e2e8f0', padding: '16px', overflowY: 'auto' }}>
+        {[1,2,3].map(i => (
+          <div key={i} className="sfx-skeleton" style={{ height: '90px', borderRadius: '10px', marginBottom: '10px' }} />
+        ))}
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '14px' }}>Select a job to view details</div>
     </div>
   );
+
   return (
-    <div style={{ paddingBottom: '60px', padding: '0 0 60px 0' }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={handleTouchMove}>
-      {isPulling && <div style={{ textAlign: 'center', padding: '12px', color: '#14B8A6', fontSize: '13px', fontWeight: '600' }}>↓ Release to refresh</div>}
-      <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {jobs.length > 0 && <span style={{ backgroundColor: '#ef4444', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '800' }}>{jobs.length}</span>}
-          <span style={{ color: '#6b7280', fontSize: '13px' }}>{jobs.length} {jobs.length !== 1 ? t.assignedJobs : t.assignedJob}</span>
+    <div style={{ display: 'flex', height: 'calc(100vh - 60px)', overflow: 'hidden' }}>
+
+      {/* Left job list panel */}
+      <div style={{ width: '360px', minWidth: '360px', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', backgroundColor: '#fff', overflowY: 'auto' }}>
+        {/* List header */}
+        <div style={{ padding: '14px 16px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', position: 'sticky', top: 0, zIndex: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {jobs.length > 0 && <span style={{ backgroundColor: '#ef4444', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '800' }}>{jobs.length}</span>}
+            <span style={{ color: '#374151', fontSize: '13px', fontWeight: '600' }}>{jobs.length} {jobs.length !== 1 ? t.assignedJobs : t.assignedJob}</span>
+          </div>
+          <button onClick={fetchJobs} style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', color: '#6b7280', cursor: 'pointer' }}>↻ Refresh</button>
         </div>
-        <span style={{ color: '#9ca3af', fontSize: '11px' }}>↕ Pull to refresh</span>
-      </div>
-      {jobs.length === 0 && (
-        <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '32px 16px', margin: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', textAlign: 'center', color: '#6b7280' }}>
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>✅</div>
-          <div style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '16px', marginBottom: '6px' }}>{t.noJobs}</div>
-          <div style={{ fontSize: '13px', color: '#9ca3af' }}>{lang === 'es' ? 'Todo esta bajo control. Buen trabajo.' : 'Queue is clear. Great work.'}</div>
-        </div>
-      )}
-      {jobs.map(job => {
-        const tier = getTier(job);
-        const tLabel = lang === 'es' ? tierLabelEs[tier] : tierLabel[tier];
-        return (
-          <div key={job.id} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '16px', margin: '12px', boxShadow: tier === 'LS' ? '0 0 0 2px #dc2626, 0 1px 8px rgba(220,38,38,0.25)' : '0 1px 4px rgba(0,0,0,0.08)', cursor: 'pointer', borderLeft: `4px solid ${tierColor[tier]}` }} onClick={() => { haptic([10]); onSelectJob(job); }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-              <span style={{ fontWeight: '600', color: '#1B3A6B', fontSize: '15px' }}>{t.unit} {job.unit_number || ''}</span>
-              <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '700' }}>{tLabel}</span>
-            </div>
-            <p style={{ margin: '0 0 4px', color: '#111827', fontSize: '14px' }}>{job.description}</p>
-            <div style={{ color: '#6b7280', fontSize: '12px', marginBottom: '8px' }}>{job.property_name}</div>
-            <SLATimer createdAt={job.created_at} slaHours={tier === 'LS' ? 1 : tier === '1' ? 4 : tier === '2' ? 24 : 72} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-              <span style={{ backgroundColor: statusColor[job.status] || '#6b7280', color: 'white', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
-                {lang === 'es' ? ({ in_progress: 'En progreso', pending: 'Pendiente', assigned: 'Asignado', completed: 'Completado' }[job.status] || job.status) : job.status?.replace('_', ' ')}
-              </span>
+
+        {/* Empty state */}
+        {jobs.length === 0 && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '36px', marginBottom: '12px' }}>✅</div>
+            <div style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '15px', marginBottom: '4px' }}>{t.noJobs}</div>
+            <div style={{ fontSize: '13px', color: '#9ca3af' }}>{lang === 'es' ? 'Todo esta bajo control. Buen trabajo.' : 'Queue is clear. Great work.'}</div>
+          </div>
+        )}
+
+        {/* Job rows */}
+        {jobs.map(job => {
+          const tier = getTier(job);
+          const tLabel = lang === 'es' ? tierLabelEs[tier] : tierLabel[tier];
+          const isSelected = selectedJobId === job.id;
+          return (
+            <div key={job.id}
+              onClick={() => { haptic([10]); setSelectedJobId(job.id); onSelectJob(job); }}
+              style={{ padding: '14px 16px', borderBottom: '1px solid #f3f4f6', cursor: 'pointer', borderLeft: `4px solid ${tierColor[tier]}`, backgroundColor: isSelected ? '#f0f4ff' : 'white', transition: 'background 0.1s', boxShadow: tier === 'LS' ? 'inset 0 0 0 1px rgba(220,38,38,0.2)' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                <span style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '14px' }}>{t.unit} {job.unit_number || ''}</span>
+                <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: '700', flexShrink: 0 }}>{tLabel}</span>
+              </div>
+              <p style={{ margin: '0 0 4px', color: '#374151', fontSize: '13px', lineHeight: '1.4', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.description}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: '#6b7280', fontSize: '11px' }}>{job.property_name}</span>
+                <span style={{ backgroundColor: statusColor[job.status] || '#6b7280', color: 'white', padding: '2px 7px', borderRadius: '10px', fontSize: '10px', fontWeight: '600' }}>
+                  {job.status?.replace(/_/g, ' ')}
+                </span>
+              </div>
+              <SLATimer createdAt={job.created_at} slaHours={tier === 'LS' ? 1 : tier === '1' ? 4 : tier === '2' ? 24 : 72} />
               {(job.status === 'dispatched' || job.status === 'scheduled') && (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }} onClick={e => handleAccept(e, job.id)} disabled={actionLoading === job.id + '_accept'}>
+                <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                  <button style={{ flex: 1, backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '6px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }} onClick={e => handleAccept(e, job.id)} disabled={actionLoading === job.id + '_accept'}>
                     {actionLoading === job.id + '_accept' ? '...' : t.accept}
                   </button>
-                  <button style={{ backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }} onClick={e => handleDecline(e, job.id)} disabled={actionLoading === job.id + '_decline'}>
+                  <button style={{ flex: 1, backgroundColor: 'white', color: '#6b7280', border: '1px solid #e5e7eb', padding: '6px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }} onClick={e => handleDecline(e, job.id)} disabled={actionLoading === job.id + '_decline'}>
                     {actionLoading === job.id + '_decline' ? '...' : t.decline}
                   </button>
                 </div>
               )}
             </div>
+          );
+        })}
+      </div>
+
+      {/* Right detail panel */}
+      <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#F0F4F8', paddingBottom: '56px' }}>
+        {!selectedJob ? (
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔧</div>
+            <div style={{ fontSize: '15px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Select a job</div>
+            <div style={{ fontSize: '13px' }}>Click any work order on the left to view details</div>
           </div>
-        );
-      })}
+        ) : (
+          <JobDetailPanel job={selectedJob} token={token} tech={tech} onBack={() => setSelectedJobId(null)} onStatusUpdate={onStatusUpdate} onCheckIn={() => onSelectJob(selectedJob)} onVideoCall={() => {}} lang={lang} />
+        )}
+      </div>
+
+      {/* Bottom bar */}
       <div style={{ position: 'fixed', bottom: 0, left: '220px', right: 0, backgroundColor: '#1B3A6B', color: 'white', padding: '8px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', zIndex: 50 }}>
         <button onClick={onShow911} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>🚨 911</button>
         <span style={{ backgroundColor: '#14B8A6', padding: '3px 12px', borderRadius: '10px', fontWeight: '600' }}>{t.onDuty}</span>
@@ -1649,6 +1675,144 @@ function SubmittedScreen({ job, tech, token, checkInData, diagData, gate1Data, o
   );
 }
 
+function JobDetailPanel({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVideoCall, lang }) {
+  const t = STRINGS[lang];
+  const tier = getTier(job);
+  const tLabel = lang === 'es' ? tierLabelEs[tier] : tierLabel[tier];
+  const [loading, setLoading] = useState(false);
+  const [note, setNote] = useState('');
+  const [speaking, setSpeaking] = useState(false);
+
+  const handleAudioSummary = () => {
+    if (speaking) { window.speechSynthesis.cancel(); setSpeaking(false); return; }
+    const isEs = lang === 'es';
+    const unit = job.unit_number || '';
+    const text = isEs
+      ? `Trabajo en unidad ${unit}, ${job.property_name}. ${job.description}. Estado: ${job.status}.`
+      : `Job at unit ${unit}, ${job.property_name}. ${job.description}. Status: ${job.status}.`;
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = isEs ? 'es-MX' : 'en-US'; utt.rate = 0.95;
+    utt.onend = () => setSpeaking(false);
+    setSpeaking(true); window.speechSynthesis.speak(utt);
+  };
+
+  const updateStatus = async (newStatus) => {
+    setLoading(true);
+    try {
+      await axios.patch(`${API}/service-requests/${job.id}/status`, { status: newStatus, notes: note }, { headers: { Authorization: `Bearer ${token}` } });
+      onStatusUpdate(job.id, newStatus);
+    } catch { alert(t.failStatus); }
+    setLoading(false);
+  };
+
+  const ticketPrefix = ['dispatched','scheduled','in_progress','pending_qa','completed'].includes(job.status) ? 'SO' : 'SR';
+  const ticketNum = job.ticket_number ? String(job.ticket_number).padStart(4,'0') : '????';
+
+  return (
+    <div style={{ padding: '20px 24px' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <div>
+          <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>{ticketPrefix}-{ticketNum}</div>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#111827' }}>{t.unit} {job.unit_number} — {job.property_name}</h2>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ backgroundColor: tierColor[tier], color: 'white', padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '700' }}>{tLabel}</span>
+          <span style={{ backgroundColor: statusColor[job.status] || '#6b7280', color: 'white', padding: '4px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '600' }}>{job.status?.replace(/_/g, ' ')}</span>
+          <button onClick={handleAudioSummary} style={{ backgroundColor: speaking ? '#ef4444' : '#1B3A6B', color: 'white', border: 'none', width: '36px', height: '36px', borderRadius: '50%', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {speaking ? '⏹' : '🔊'}
+          </button>
+        </div>
+      </div>
+
+      {/* Two-column layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '16px' }}>
+        {/* Left: service brief */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Service brief card */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '18px', border: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: '11px', fontWeight: '800', color: '#1B3A6B', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '14px' }}>📋 Service Brief</div>
+            {job.description && (
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Resident Report</div>
+                <div style={{ fontSize: '14px', color: '#374151', lineHeight: '1.5' }}>{job.description}</div>
+              </div>
+            )}
+            {job.triage_assessment && (
+              <div style={{ backgroundColor: '#f0f4ff', borderRadius: '8px', padding: '12px', borderLeft: '3px solid #1B3A6B', marginBottom: '12px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>🤖 AI Assessment</div>
+                <div style={{ fontSize: '13px', color: '#374151', lineHeight: '1.5' }}>{job.triage_assessment}</div>
+              </div>
+            )}
+            {job.location_room && (
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>📍 Location</div>
+                <div style={{ fontSize: '14px', color: '#1B3A6B', fontWeight: '600' }}>{job.location_room}{job.location_spot ? ` — ${job.location_spot}` : ''}</div>
+              </div>
+            )}
+            {job.photo_urls && job.photo_urls.length > 0 && (
+              <div>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>📷 Resident Photos ({job.photo_urls.length})</div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {job.photo_urls.map((url, i) => (
+                    <img key={i} src={url} alt={`photo-${i}`} style={{ width: '90px', height: '68px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e2e8f0' }} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Notes */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '18px', border: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '8px' }}>{t.addNote}</div>
+            <textarea style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box', height: '80px', resize: 'none', color: '#374151' }} placeholder={t.notesPlaceholder} value={note} onChange={e => setNote(e.target.value)} />
+            {(job.status === 'dispatched' || job.status === 'scheduled') && (
+              <button style={{ marginTop: '10px', backgroundColor: '#f97316', color: 'white', border: 'none', padding: '9px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', width: '100%' }} onClick={() => updateStatus('in_progress')} disabled={loading}>{t.markEnRoute}</button>
+            )}
+            {job.status === 'completed' && <div style={{ textAlign: 'center', color: '#22c55e', fontWeight: '600', marginTop: '10px' }}>{t.jobComplete}</div>}
+          </div>
+        </div>
+
+        {/* Right: actions + navigation */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Navigation */}
+          <a href={`https://maps.google.com/?q=${encodeURIComponent((job.property_address || job.property_name || '') + ' Houston TX')}`}
+            target="_blank" rel="noopener noreferrer"
+            style={{ display: 'block', backgroundColor: 'white', borderRadius: '12px', padding: '16px', border: '1px solid #e2e8f0', textDecoration: 'none' }}
+            onClick={() => haptic([10])}>
+            <div style={{ fontSize: '10px', color: '#6b7280', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>📍 {t.location}</div>
+            <div style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '14px' }}>{t.unit} {job.unit_number}</div>
+            <div style={{ color: '#374151', fontSize: '13px', marginTop: '2px' }}>{job.property_name}</div>
+            <div style={{ marginTop: '8px', color: '#14B8A6', fontSize: '12px', fontWeight: '600' }}>Open in Maps →</div>
+          </a>
+
+          {/* SLA */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', border: '1px solid #e2e8f0' }}>
+            <div style={{ fontSize: '10px', color: '#6b7280', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>⏱ SLA Status</div>
+            <SLATimer createdAt={job.created_at} slaHours={tier === 'LS' ? 1 : tier === '1' ? 4 : tier === '2' ? 24 : 72} />
+          </div>
+
+          {/* Check-in CTA */}
+          {(job.status === 'in_progress' || job.status === 'dispatched' || job.status === 'scheduled') && (
+            <div style={{ backgroundColor: '#1B3A6B', borderRadius: '12px', padding: '18px' }}>
+              <div style={{ color: 'white', fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>{t.readyToStart}</div>
+              <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '12px', marginBottom: '14px' }}>{t.checkInRequired}</div>
+              <button style={{ backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', width: '100%' }} onClick={() => { haptic([15,50,15]); onCheckIn(); }}>
+                {t.beginCheckIn}
+              </button>
+              {job.status === 'in_progress' && job.tech_checked_in && (
+                <button style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', width: '100%', marginTop: '8px' }} onClick={() => onVideoCall(job)}>
+                  📹 Start Video Call
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVideoCall, lang }) {
   const t = STRINGS[lang];
   const tier = getTier(job);
@@ -2592,7 +2756,7 @@ export default function App() {
           </div>
         );
       })()}
-      {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
+      {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} onStartCheckin={(job) => { setSelectedJob(job); setScreen('checkin'); }} />}
       {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={handleBeginCheckIn} onVideoCall={handleVideoCall} lang={lang} />}
       {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} state={checkInState} setState={updateCheckInState} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
       {screen === 'diagnosis' && selectedJob && <DiagnosisScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} onComplete={handleDiagnosisComplete} onBack={() => setScreen('checkin')} lang={lang} onVideoCall={handleVideoCall} checkedIn={selectedJob.tech_checked_in} state={diagnosisState} setState={updateDiagnosisState} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
