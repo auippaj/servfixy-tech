@@ -353,7 +353,7 @@ function LoginScreen({ onLogin, lang, setLang }) {
   );
 }
 
-function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
+function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall, onStartCheckin }) {
   const t = STRINGS[lang];
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -512,7 +512,7 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall }) {
             <div style={{ fontSize: '13px' }}>Click any work order on the left to view details</div>
           </div>
         ) : (
-          <JobDetailPanel job={selectedJob} token={token} tech={tech} onBack={() => setSelectedJobId(null)} onStatusUpdate={onStatusUpdate} onCheckIn={() => onSelectJob(selectedJob)} onVideoCall={() => {}} lang={lang} />
+          <JobDetailPanel job={selectedJob} token={token} tech={tech} onBack={() => setSelectedJobId(null)} onStatusUpdate={onStatusUpdate} onCheckIn={() => { if (onStartCheckin) onStartCheckin(selectedJob); }} onVideoCall={() => {}} lang={lang} />
         )}
       </div>
 
@@ -2756,7 +2756,7 @@ export default function App() {
           </div>
         );
       })()}
-      {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} onStartCheckin={(job) => { setSelectedJob(job); setScreen('checkin'); }} />}
+      {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} onStartCheckin={(job) => { setSelectedJob(job); resetJobState(); setScreen('checkin'); }} />}
       {screen === 'detail' && selectedJob && <JobDetail job={selectedJob} token={token} tech={tech} onBack={() => setScreen('list')} onStatusUpdate={handleStatusUpdate} onCheckIn={handleBeginCheckIn} onVideoCall={handleVideoCall} lang={lang} />}
       {screen === 'checkin' && selectedJob && <CheckInScreen job={selectedJob} tech={tech} token={token} onComplete={handleCheckInComplete} onBack={() => setScreen('detail')} lang={lang} state={checkInState} setState={updateCheckInState} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
       {screen === 'diagnosis' && selectedJob && <DiagnosisScreen job={selectedJob} tech={tech} token={token} checkInData={checkInData} onComplete={handleDiagnosisComplete} onBack={() => setScreen('checkin')} lang={lang} onVideoCall={handleVideoCall} checkedIn={selectedJob.tech_checked_in} state={diagnosisState} setState={updateDiagnosisState} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} />}
