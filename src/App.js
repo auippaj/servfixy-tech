@@ -2556,13 +2556,7 @@ export default function App() {
           </div>
         </div>
       )}
-      {screen === 'list' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', margin: '12px 16px 0' }}>
-          <div onClick={() => { haptic([10]); setScreen('tasks'); }} style={{ backgroundColor: '#14B8A6', color: 'white', padding: '14px 12px', borderRadius: '10px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🧪 Rounds</span><span>→</span></div>
-          <div onClick={() => { haptic([10]); setScreen('history'); }} style={{ backgroundColor: '#7c3aed', color: 'white', padding: '14px 12px', borderRadius: '10px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>📋 History</span><span>→</span></div>
-        </div>
-      )}
-      {screen === 'list' && <div onClick={() => { haptic([10]); setScreen('turns'); }} style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '14px 16px', margin: '8px 16px 0', borderRadius: '10px', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>🚪 Turn Walks</span><span>→</span></div>}
+
       {screen === 'list' && (() => {
         if (myTasksLoading) return <div style={{ margin: '8px 16px 0', padding: '12px 16px', backgroundColor: '#f3f4f6', borderRadius: '10px', color: '#6b7280', fontSize: '13px' }}>Loading your turn tasks...</div>;
         if (myTurnTasks.length === 0) return null;
