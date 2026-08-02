@@ -810,7 +810,7 @@ function CheckInScreen({  job, tech, token, onComplete, onBack, lang, state, set
             <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px', lineHeight: '1.6' }}>{lang === 'es' ? 'Confirma que llevas el equipo de proteccion personal adecuado para este trabajo.' : 'Confirm you have the proper personal protective equipment for this job.'}</div>
             {[['🥽', lang === 'es' ? 'Proteccion ocular' : 'Eye protection'], ['🧤', lang === 'es' ? 'Guantes' : 'Gloves'], ['👷', lang === 'es' ? 'Casco si aplica' : 'Hard hat if applicable'], ['👟', lang === 'es' ? 'Calzado de seguridad' : 'Safety footwear']].map(function(item) {
               return (
-                <div key={item[1]} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', backgroundColor: '#f9fafb', borderRadius: '10px', marginBottom: '8px', textAlign: 'left' }}>
+                <div key={item[1]} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', backgroundColor: '#F0F4F8', borderRadius: '10px', marginBottom: '8px', textAlign: 'left' }}>
                   <span style={{ fontSize: '24px' }}>{item[0]}</span>
                   <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>{item[1]}</span>
                 </div>
@@ -910,7 +910,7 @@ const handleHvacAnalysis = async () => {
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#111827', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Tipo de valvula' : 'Expansion Valve'}</label>
                 <div style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', border: '2px solid #e5e7eb' }}>
                   {['TXV', 'Fixed Orifice'].map(v => (
-                    <button key={v} onClick={() => setState({ expansionValve: v })} style={{ flex: 1, padding: '10px', border: 'none', cursor: 'pointer', backgroundColor: expansionValve === v ? '#1B3A6B' : '#f9fafb', color: expansionValve === v ? 'white' : '#6b7280', fontWeight: '700', fontSize: '13px' }}>
+                    <button key={v} onClick={() => setState({ expansionValve: v })} style={{ flex: 1, padding: '10px', border: 'none', cursor: 'pointer', backgroundColor: expansionValve === v ? '#1B3A6B' : '#F0F4F8', color: expansionValve === v ? 'white' : '#6b7280', fontWeight: '700', fontSize: '13px' }}>
                       {v}
                     </button>
                   ))}
@@ -1018,7 +1018,7 @@ const handleHvacAnalysis = async () => {
                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', color: 'white', fontSize: '9px', padding: '2px 4px', textAlign: 'center' }}>{p.time}</div>
                 </div>
               ))}
-              <div style={{ aspectRatio: '1', borderRadius: '8px', border: '2px dashed #d1d5db', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backgroundColor: '#f9fafb' }} onClick={() => photoInputRef.current?.click()}>
+              <div style={{ aspectRatio: '1', borderRadius: '8px', border: '2px dashed #d1d5db', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backgroundColor: '#F0F4F8' }} onClick={() => photoInputRef.current?.click()}>
                 <div style={{ fontSize: '24px' }}>📷</div>
                 <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '4px' }}>{t.add}</div>
               </div>
@@ -1151,10 +1151,10 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
             {lang === 'es' ? 'Estado del trabajo' : 'Job Outcome'}
           </div>
           <div style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-            <button onClick={() => setState({ mode: 'completed' })} style={{ flex: 1, padding: '12px', border: 'none', cursor: 'pointer', backgroundColor: mode === 'completed' ? '#1B3A6B' : '#f9fafb', color: mode === 'completed' ? 'white' : '#6b7280', fontWeight: '700', fontSize: '14px', transition: 'all 0.15s' }}>
+            <button onClick={() => setState({ mode: 'completed' })} style={{ flex: 1, padding: '12px', border: 'none', cursor: 'pointer', backgroundColor: mode === 'completed' ? '#1B3A6B' : '#F0F4F8', color: mode === 'completed' ? 'white' : '#6b7280', fontWeight: '700', fontSize: '14px', transition: 'all 0.15s' }}>
               ✅ {lang === 'es' ? 'Completado' : 'Completed'}
             </button>
-            <button onClick={() => setState({ mode: 'deferred' })} style={{ flex: 1, padding: '12px', border: 'none', borderLeft: '1px solid #e5e7eb', cursor: 'pointer', backgroundColor: mode === 'deferred' ? '#dc2626' : '#f9fafb', color: mode === 'deferred' ? 'white' : '#6b7280', fontWeight: '700', fontSize: '14px', transition: 'all 0.15s' }}>
+            <button onClick={() => setState({ mode: 'deferred' })} style={{ flex: 1, padding: '12px', border: 'none', borderLeft: '1px solid #e5e7eb', cursor: 'pointer', backgroundColor: mode === 'deferred' ? '#dc2626' : '#F0F4F8', color: mode === 'deferred' ? 'white' : '#6b7280', fontWeight: '700', fontSize: '14px', transition: 'all 0.15s' }}>
               ⏸ {lang === 'es' ? 'Aplazado' : 'Deferred'}
             </button>
           </div>
@@ -1216,7 +1216,7 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
                 value={deferralNextSteps} onChange={e => setState({ deferralNextSteps: e.target.value })} />
             </div>
 
-            <div style={{ backgroundColor: deferralOk ? '#dc2626' : '#f9fafb', borderRadius: '12px', padding: '16px', border: `1px solid ${deferralOk ? 'transparent' : '#e5e7eb'}` }}>
+            <div style={{ backgroundColor: deferralOk ? '#dc2626' : '#F0F4F8', borderRadius: '12px', padding: '16px', border: `1px solid ${deferralOk ? 'transparent' : '#e5e7eb'}` }}>
               {!deferralOk && (
                 <div style={{ marginBottom: '12px' }}>
                   {!deferralReason && <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>⚠ {lang === 'es' ? 'Selecciona una razon de aplazamiento' : 'Select a deferral reason'}</div>}
@@ -1244,14 +1244,14 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
               </div>
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t.category}</label>
-                <select style={{ ...selectStyle, backgroundColor: system ? 'white' : '#f9fafb', color: system ? '#374151' : '#9ca3af' }} value={category} onChange={e => handleCategoryChange(e.target.value)} disabled={!system}>
+                <select style={{ ...selectStyle, backgroundColor: system ? 'white' : '#F0F4F8', color: system ? '#374151' : '#9ca3af' }} value={category} onChange={e => handleCategoryChange(e.target.value)} disabled={!system}>
                   <option value="">{t.selectCategory}</option>
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t.cause}</label>
-                <select style={{ ...selectStyle, backgroundColor: category ? 'white' : '#f9fafb', color: category ? '#374151' : '#9ca3af' }} value={cause} onChange={e => setState({ cause: e.target.value })} disabled={!category}>
+                <select style={{ ...selectStyle, backgroundColor: category ? 'white' : '#F0F4F8', color: category ? '#374151' : '#9ca3af' }} value={cause} onChange={e => setState({ cause: e.target.value })} disabled={!category}>
                   <option value="">{t.selectCause}</option>
                   {causes.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -1300,7 +1300,7 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
               {parts.length > 0 && (
                 <div style={{ marginBottom: '12px' }}>
                   {parts.map(p => (
-                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', backgroundColor: '#f9fafb', borderRadius: '8px', marginBottom: '6px' }}>
+                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', backgroundColor: '#F0F4F8', borderRadius: '8px', marginBottom: '6px' }}>
                       <div>
                         <div style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>{p.name}</div>
                         <div style={{ fontSize: '12px', color: '#6b7280' }}>{t.qty}: {p.qty} {p.cost ? `- $${(parseFloat(p.cost) * p.qty).toFixed(2)}` : ''}</div>
@@ -1318,12 +1318,12 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
                 <input style={{ width: '52px', padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', textAlign: 'center', boxSizing: 'border-box' }} type="number" min="1" placeholder={t.qty} value={newPart.qty} onChange={e => setState({ newPart: { ...newPart, qty: parseInt(e.target.value) || 1 } })} />
                 <input style={{ width: '72px', padding: '10px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box' }} type="number" min="0" step="0.01" placeholder="$cost" value={newPart.cost} onChange={e => setState({ newPart: { ...newPart, cost: e.target.value } })} />
               </div>
-              <button style={{ width: '100%', padding: '10px', backgroundColor: newPart.name.trim() ? '#f0fdf4' : '#f9fafb', color: newPart.name.trim() ? '#15803d' : '#9ca3af', border: `1px solid ${newPart.name.trim() ? '#22c55e' : '#e5e7eb'}`, borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: newPart.name.trim() ? 'pointer' : 'default' }} onClick={addPart} disabled={!newPart.name.trim()}>
+              <button style={{ width: '100%', padding: '10px', backgroundColor: newPart.name.trim() ? '#f0fdf4' : '#F0F4F8', color: newPart.name.trim() ? '#15803d' : '#9ca3af', border: `1px solid ${newPart.name.trim() ? '#22c55e' : '#e5e7eb'}`, borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: newPart.name.trim() ? 'pointer' : 'default' }} onClick={addPart} disabled={!newPart.name.trim()}>
                 {t.addPart}
               </button>
             </div>
 
-            <div style={{ backgroundColor: canSubmitCompleted ? '#1B3A6B' : '#f9fafb', borderRadius: '12px', padding: '16px', border: `1px solid ${canSubmitCompleted ? 'transparent' : '#e5e7eb'}` }}>
+            <div style={{ backgroundColor: canSubmitCompleted ? '#1B3A6B' : '#F0F4F8', borderRadius: '12px', padding: '16px', border: `1px solid ${canSubmitCompleted ? 'transparent' : '#e5e7eb'}` }}>
               {!canSubmitCompleted && (
                 <div style={{ marginBottom: '12px' }}>
                   {!rootCauseOk && <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{t.warnRootCause}</div>}
@@ -1527,7 +1527,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
                 return (
                   <button key={asset.id} onClick={() => setSelectedAssetId(isSelected ? '' : asset.id)}
                     style={{ padding: '10px 14px', borderRadius: '8px', border: '2px solid ' + (isSelected ? '#14B8A6' : '#e5e7eb'),
-                      backgroundColor: isSelected ? 'rgba(20,184,166,0.08)' : '#f8fafc',
+                      backgroundColor: isSelected ? 'rgba(20,184,166,0.08)' : '#F0F4F8',
                       textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>{asset.asset_type}</div>
@@ -1535,7 +1535,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {asset.unit_number === 'Common' && (
-                        <span style={{ fontSize: '10px', backgroundColor: '#f1f5f9', color: '#64748b', padding: '2px 6px', borderRadius: '4px' }}>Common</span>
+                        <span style={{ fontSize: '10px', backgroundColor: '#F0F4F8', color: '#64748b', padding: '2px 6px', borderRadius: '4px' }}>Common</span>
                       )}
                       {isSelected && <span style={{ color: '#14B8A6', fontSize: '18px', fontWeight: '700' }}>✓</span>}
                     </div>
@@ -1585,7 +1585,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', color: 'white', fontSize: '9px', padding: '2px 4px', textAlign: 'center' }}>{p.time}</div>
               </div>
             ))}
-            <div style={{ aspectRatio: '1', borderRadius: '8px', border: '2px dashed #d1d5db', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backgroundColor: '#f9fafb' }} onClick={() => afterPhotoRef.current?.click()}>
+            <div style={{ aspectRatio: '1', borderRadius: '8px', border: '2px dashed #d1d5db', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backgroundColor: '#F0F4F8' }} onClick={() => afterPhotoRef.current?.click()}>
               <div style={{ fontSize: '24px' }}>📷</div>
               <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '4px' }}>{t.add}</div>
             </div>
@@ -1593,7 +1593,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
           <input ref={afterPhotoRef} type="file" accept="image/*" capture="environment" multiple style={{ display: 'none' }} onChange={handleAfterPhoto} />
         </div>
 
-        <div style={{ backgroundColor: allChecked ? '#1B3A6B' : '#f9fafb', borderRadius: '12px', padding: '16px', border: `1px solid ${allChecked ? 'transparent' : '#e5e7eb'}` }}>
+        <div style={{ backgroundColor: allChecked ? '#1B3A6B' : '#F0F4F8', borderRadius: '12px', padding: '16px', border: `1px solid ${allChecked ? 'transparent' : '#e5e7eb'}` }}>
           {!allChecked && (
             <div style={{ marginBottom: '12px', padding: '10px 14px', backgroundColor: '#fef9ec', borderRadius: '8px', border: '1px solid #fbbf24' }}>
               <div style={{ fontSize: '13px', color: '#92400e', fontWeight: '600' }}>
@@ -2823,7 +2823,7 @@ function App() {
                     <span style={{ fontSize: '12px', color: '#6b7280' }}>{done}/{group.tasks.length} complete</span>
                   </div>
                   <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>{group.floorplan_name}</div>
-                  <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '6px', backgroundColor: '#F0F4F8', borderRadius: '3px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${group.tasks.length > 0 ? (done/group.tasks.length)*100 : 0}%`, backgroundColor: '#14B8A6', borderRadius: '3px' }} />
                   </div>
                   {pending > 0 && <div style={{ marginTop: '8px', fontSize: '12px', color: '#f97316', fontWeight: '600' }}>{pending} task{pending > 1 ? 's' : ''} pending</div>}
@@ -3004,7 +3004,7 @@ function ScoreboardScreen({ tech, token, myScore, lang, onBack }) {
                       {[['Quality', row.quality_score], ['Compliance', row.compliance_score], ['Response', row.responsiveness_score]].map(([label, val]) => (
                         <div key={label}>
                           <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '2px' }}>{label}</div>
-                          <div style={{ height: '4px', backgroundColor: '#f1f5f9', borderRadius: '2px', overflow: 'hidden' }}>
+                          <div style={{ height: '4px', backgroundColor: '#F0F4F8', borderRadius: '2px', overflow: 'hidden' }}>
                             <div style={{ height: '100%', width: `${Math.min(100, parseFloat(val))}%`, backgroundColor: barColor(parseFloat(val)), borderRadius: '2px' }} />
                           </div>
                         </div>
@@ -3037,7 +3037,7 @@ function ScoreboardScreen({ tech, token, myScore, lang, onBack }) {
                 <span style={{ fontSize: '12px', color: '#374151' }}>{label}</span>
                 <span style={{ fontSize: '12px', fontWeight: '700', color: '#1B3A6B' }}>{parseFloat(val).toFixed(0)}</span>
               </div>
-              <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ height: '6px', backgroundColor: '#F0F4F8', borderRadius: '3px', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${Math.min(100, parseFloat(val))}%`, backgroundColor: barColor(parseFloat(val)), borderRadius: '3px' }} />
               </div>
             </div>
