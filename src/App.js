@@ -2793,7 +2793,7 @@ function App() {
           </div>
         );
       })()}
-      {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} onStartCheckin={(job) => { setSelectedJob(job); resetJobState(); setScreen('checkin'); }} />}
+      {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} onStartCheckin={(job) => { setSelectedJob(job); resetJobState(); setScreen('checkin'); }} />}
       {screen === 'turn_tasks' && (
         <div style={{ padding: '24px' }}>
           <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '800', color: '#111827' }}>🏠 Turn Tasks</h2>
