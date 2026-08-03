@@ -512,7 +512,7 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall, onS
             <div style={{ fontSize: '13px' }}>Click any work order on the left to view details</div>
           </div>
         ) : (
-          <JobDetailPanel job={selectedJob} token={token} tech={tech} onBack={() => setSelectedJobId(null)} onStatusUpdate={onStatusUpdate} onCheckIn={() => { if (onStartCheckin) onStartCheckin(selectedJob); }} onVideoCall={() => {}} lang={lang} />
+          <JobDetailPanel job={selectedJob} token={token} tech={tech} onBack={() => setSelectedJobId(null)} onStatusUpdate={() => {}} onCheckIn={() => { if (onStartCheckin) onStartCheckin(selectedJob); }} onVideoCall={() => {}} lang={lang} />
         )}
       </div>
 
