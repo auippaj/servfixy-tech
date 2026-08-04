@@ -1397,6 +1397,9 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
   const [unitAssets, setUnitAssets] = useState([]);
   const [selectedAssetId, setSelectedAssetId] = useState('');
   const [assetsLoading, setAssetsLoading] = useState(false);
+  const [capitalEnabled, setCapitalEnabled] = useState(false);
+  const [capitalCategory, setCapitalCategory] = useState('');
+  const [capitalNotes, setCapitalNotes] = useState('');
 
   // Lazily initialize `checked` the first time this screen renders for a job.
   // (Effect, not a render-time setState-and-return, so hook order never changes.)
@@ -1459,13 +1462,13 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
 
   const requiredCount = checklistItems.length; // 7 items — tech close-out
   const totalChecked = checked.filter(Boolean).length;
-  const allChecked = totalChecked >= requiredCount;
+  const allChecked = totalChecked >= requiredCount && (!capitalEnabled || capitalCategory !== '');
   const progress = totalChecked / requiredCount;
 
   // Combined action: fire GPS check-out (if not already captured), then submit.
   const handleSubmitClick = () => {
     if (gpsOut) {
-      onComplete({ afterPhotos, signed, totalChecked, gpsOut, selectedAssetId });
+      onComplete({ afterPhotos, signed, totalChecked, gpsOut, selectedAssetId, capitalEnabled, capitalCategory, capitalNotes });
       return;
     }
     setSubmitError('');
@@ -1475,14 +1478,14 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
         const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
         setState({ gpsOut: coords });
         setGpsOutLoading(false);
-        onComplete({ afterPhotos, signed, totalChecked, gpsOut: coords, selectedAssetId });
+        onComplete({ afterPhotos, signed, totalChecked, gpsOut: coords, selectedAssetId, capitalEnabled, capitalCategory, capitalNotes });
       },
       (err) => {
         console.error('GPS check-out error:', err);
         setGpsOutLoading(false);
         // Don't block submission on GPS failure — proceed without coords,
         // same spirit as the manual check-in fallback.
-        onComplete({ afterPhotos, signed, totalChecked, gpsOut: null, selectedAssetId });
+        onComplete({ afterPhotos, signed, totalChecked, gpsOut: null, selectedAssetId, capitalEnabled, capitalCategory, capitalNotes });
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -1542,6 +1545,56 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
                   </button>
                 );
               })}
+            </div>
+          )}
+        </div>
+
+
+        {/* ── Capital Labor Allocation ── */}
+        <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '16px', marginBottom: '16px', border: capitalEnabled ? '2px solid #f59e0b' : '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1B3A6B' }}>
+              \uD83D\uDCB0 {lang === 'es' ? 'Asignar horas a capital' : 'Allocate Labor to CapEx'}
+            </div>
+            <button onClick={() => { setCapitalEnabled(v => !v); setCapitalCategory(''); setCapitalNotes(''); }}
+              style={{ width: '44px', height: '24px', borderRadius: '12px', border: 'none', cursor: 'pointer', backgroundColor: capitalEnabled ? '#f59e0b' : '#d1d5db', position: 'relative', transition: 'background 0.2s' }}>
+              <div style={{ position: 'absolute', top: '2px', left: capitalEnabled ? '22px' : '2px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
+            </button>
+          </div>
+          <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: capitalEnabled ? '14px' : '0' }}>
+            {lang === 'es' ? 'Este trabajo es de capital (instalacion, reemplazo mayor)' : 'Flag this job as capital work — pushes labor hours to CapEx report'}
+          </div>
+          {capitalEnabled && (
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
+                {lang === 'es' ? 'Categoria de capital' : 'Capital Category'} <span style={{ color: '#ef4444' }}>*</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+                {(lang === 'es' ? ['Instalacion HVAC', 'Calentador de agua', 'Reemplazo de electrodomestico', 'Plomeria', 'Electrico', 'Pisos', 'Techo / Exterior', 'Otro CapEx'] : ['HVAC Install', 'Water Heater Install', 'Appliance Replace', 'Plumbing Rough-in', 'Electrical', 'Flooring', 'Roof / Exterior', 'Other CapEx']).map((cat, idx) => (
+                  <button key={cat} onClick={() => setCapitalCategory(cat)}
+                    style={{ padding: '9px 10px', borderRadius: '8px', border: '2px solid ' + (capitalCategory === cat ? '#f59e0b' : '#e5e7eb'),
+                      backgroundColor: capitalCategory === cat ? 'rgba(245,158,11,0.08)' : '#F0F4F8',
+                      fontSize: '12px', fontWeight: '600', color: capitalCategory === cat ? '#92400e' : '#374151',
+                      cursor: 'pointer', textAlign: 'center' }}>
+                    {cat}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
+                {lang === 'es' ? 'Notas (opcional)' : 'Notes (optional)'}
+              </div>
+              <textarea value={capitalNotes} onChange={e => setCapitalNotes(e.target.value)}
+                placeholder={lang === 'es' ? 'Describe el trabajo de capital...' : 'Describe the capital work performed...'}
+                rows={2}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '13px', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+              {capitalEnabled && !capitalCategory && (
+                <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '6px', fontWeight: '600' }}>
+                  {lang === 'es' ? 'Selecciona una categoria para continuar' : 'Select a category to submit'}
+                </div>
+              )}
+              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '8px' }}>
+                {lang === 'es' ? 'Las horas se calculan automaticamente desde el inicio del trabajo' : 'Labor hours auto-calculated from check-in timestamp'}
+              </div>
             </div>
           )}
         </div>
@@ -2567,6 +2620,28 @@ function App() {
           }, { headers: { Authorization: `Bearer ${token}` } });
         } catch (assetErr) {
           console.warn('Asset service log failed silently:', assetErr.message);
+        }
+      }
+
+      // Post capital labor entry if tech flagged this as CapEx work
+      if (data.capitalEnabled && data.capitalCategory) {
+        try {
+          const checkInTime = checkInData?.checkInTime ? new Date(checkInData.checkInTime) : null;
+          const laborHours = checkInTime
+            ? Math.round(((Date.now() - checkInTime.getTime()) / 3600000) * 4) / 4
+            : 1;
+          await axios.post(`${API}/capital-labor`, {
+            service_request_id: selectedJob.id,
+            asset_id: data.selectedAssetId || null,
+            property_id: selectedJob.property_id,
+            technician_id: tech.id,
+            labor_hours: laborHours,
+            capital_category: data.capitalCategory,
+            notes: data.capitalNotes || '',
+            work_order_number: selectedJob.ticket_number || selectedJob.id,
+          }, { headers: { Authorization: `Bearer ${token}` } });
+        } catch (capErr) {
+          console.warn('Capital labor entry failed silently:', capErr.message);
         }
       }
 
