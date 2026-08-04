@@ -1549,7 +1549,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
         <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '16px', marginBottom: '16px', border: capitalEnabled ? '2px solid #f59e0b' : '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
             <div style={{ fontSize: '13px', fontWeight: '700', color: '#1B3A6B' }}>
-              \uD83D\uDCB0 {lang === 'es' ? 'Asignar horas a capital' : 'Allocate Labor to CapEx'}
+              {lang === 'es' ? 'Asignar horas a capital' : 'Allocate Labor to CapEx'}
             </div>
             <button onClick={() => { setCapitalEnabled(v => !v); setCapitalCategory(''); setCapitalNotes(''); }}
               style={{ width: '44px', height: '24px', borderRadius: '12px', border: 'none', cursor: 'pointer', backgroundColor: capitalEnabled ? '#f59e0b' : '#d1d5db', position: 'relative', transition: 'background 0.2s' }}>
