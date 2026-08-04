@@ -1343,9 +1343,9 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
 }
 
 // ── Gate1Screen ──
-// Revised checklist: 7 items (tech close-out). QA handles deeper verification.
-// Auto-checked: item 3 (resident notified — RVC), item 4 (parts log), item 5 (after photos).
-// Manual: items 0, 1, 2, 6.
+// 10-point close-out checklist (replaces 14-point).
+// Auto-triggered + locked: item 2 (resident notified), item 6 (after photos), item 7 (PPE), item 9 (parts logged).
+// Manual: items 0, 1, 3, 4, 5, 8.
 // GPS check-out fires automatically on Submit (see handleSubmitClick).
 //
 // State (checked / afterPhotos / gpsOut / etc.) is lifted to App so it
@@ -1357,27 +1357,34 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
   const isDeferred = diagData?.mode === 'deferred';
 
   const checklistItems = lang === 'es' ? [
-    'Trabajo completado segun lo descrito',
-    'Area limpia y escombros retirados',
-    'Todos los puntos de acceso asegurados',
-    'Residente notificado o nota dejada',
+    'Verificar que la reparacion corrigio el problema',
+    'Confirmar que no quedan peligros de seguridad',
+    'Residente/ocupante notificado de la finalizacion',
+    'Verificar problemas secundarios o danos colaterales',
+    'Limpiar y restablecer el area de trabajo',
+    'Apartamento asegurado y llaves devueltas a lugar seguro',
+    'Evidencia fotografica antes y despues',
+    'EPP confirmado',
+    'Notas y diagnostico del trabajo documentados',
     'Piezas y materiales registrados',
-    'Foto del trabajo completado tomada',
-    'EPP retirado y equipo contabilizado',
   ] : [
-    'Work completed as described',
-    'Area cleaned and debris removed',
-    'All access points secured',
-    'Resident notified or note left',
-    'Parts and materials logged',
-    'Photo of completed work taken',
-    'PPE removed and equipment accounted for',
+    'Verify the repair corrected the problem',
+    'Confirm there are no remaining safety hazards',
+    'Resident/occupant notified of completion',
+    'Check for secondary problems or collateral damage',
+    'Clean and reset the work area',
+    'Apartment secured and keys returned to secured location',
+    'Before and after photo evidence captured',
+    'PPE confirmed',
+    'Work order notes and diagnosis documented',
+    'Parts logged',
   ];
 
   const autoChecked = {
-    3: !!checkInData?.rvc,
-    4: (diagData?.parts?.length || 0) > 0 || diagData?.partsNone === true,
-    5: (state.afterPhotos?.length || 0) >= 1,
+    2: !!checkInData?.rvc,                                              // Resident notified — from RVC screen
+    6: (state.afterPhotos?.length || 0) >= 1,                          // After photos captured
+    7: !!ppeConfirmed,                                                  // PPE — from PPE confirmation screen
+    9: (diagData?.parts?.length || 0) > 0 || diagData?.partsNone === true, // Parts logged
   };
 
   // All hooks must run unconditionally, in the same order, on every render
@@ -1413,7 +1420,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
       checked: checklistItems.map((_, i) => (i in autoChecked) ? autoChecked[i] : state.checked[i]),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkInData?.photos?.length, afterPhotos?.length, diagData?.system, diagData?.category, diagData?.cause, diagData?.diagnosis, checkInData?.rvc, diagData?.parts?.length]);
+  }, [checkInData?.photos?.length, afterPhotos?.length, diagData?.system, diagData?.category, diagData?.cause, diagData?.diagnosis, checkInData?.rvc, diagData?.parts?.length, ppeConfirmed]);
 
   // Fetch assets for this unit so tech can link work order to asset
   useEffect(() => {
@@ -1455,7 +1462,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
     });
   };
 
-  const requiredCount = checklistItems.length; // 7 items — tech close-out
+  const requiredCount = checklistItems.length; // 10 items — tech close-out
   const totalChecked = checked.filter(Boolean).length;
   const allChecked = totalChecked >= requiredCount && (!capitalEnabled || capitalCategory !== '');
   const progress = totalChecked / requiredCount;
