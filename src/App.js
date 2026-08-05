@@ -307,42 +307,47 @@ function LoginScreen({ onLogin, lang, setLang }) {
     setLoading(false);
   };
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0F4F8', fontFamily: 'Arial, sans-serif', padding: '24px' }}>
-      <div style={{ width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-
-        {/* Logo + tagline */}
-        <img src="https://i.imgur.com/nvDoU8X.png" alt="Servfixy" style={{ width: '280px', marginBottom: '2px', display: 'block', margin: '0 auto 2px auto' }} />
-        <div style={{ fontSize: '14px', color: '#14B8A6', fontStyle: 'italic', fontWeight: '600', marginBottom: '24px', letterSpacing: '0.01em', textAlign: 'center' }}>Relax! We Got This.</div>
-
-        {/* Login card */}
-        <div style={{ width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '36px 32px', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', marginBottom: '4px', marginTop: 0 }}>{t.techPortal}</h1>
-          <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '28px', marginTop: 0 }}>Sign in to view your assigned work orders</p>
-
-          {error && <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#991b1b', marginBottom: '20px' }}>{error}</div>}
-
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.email}</label>
-            <input style={{ width: '100%', padding: '12px 14px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', color: '#111827', backgroundColor: '#F9FAFB', boxSizing: 'border-box', outline: 'none' }} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" />
-          </div>
-          <div style={{ marginBottom: '28px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#374151', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.password}</label>
-            <input style={{ width: '100%', padding: '12px 14px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', color: '#111827', backgroundColor: '#F9FAFB', boxSizing: 'border-box', outline: 'none' }} type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} placeholder="••••••••" />
-          </div>
-          <button style={{ width: '100%', padding: '13px', backgroundColor: '#1B3A6B', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.8 : 1 }} onClick={handleLogin} disabled={loading}>
-            {loading ? t.signingIn : t.signIn}
-          </button>
+    <div style={{ minHeight: '100vh', display: 'flex', fontFamily: 'Arial, sans-serif' }}>
+      {/* Left navy panel */}
+      <div style={{ width: '400px', minWidth: '400px', backgroundColor: '#1B3A6B', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 40px' }}>
+        <img src="https://i.imgur.com/OKIqq0K.png" alt="Servfixy" style={{ width: '200px', marginBottom: '28px' }} />
+        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', textAlign: 'center', marginBottom: '40px' }}>Field Technician Portal</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+          {['GPS-verified job check-in', '5-Touch communication protocol', 'HVAC diagnostics and gauges', 'Gate 1 QA closeout workflow'].map(item => (
+            <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#14B8A6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ color: '#fff', fontSize: '11px', fontWeight: '700' }}>✓</span>
+              </div>
+              <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>{item}</span>
+            </div>
+          ))}
         </div>
-
-        {/* Language toggle */}
-        <div style={{ marginTop: '24px', display: 'flex', gap: '6px' }}>
+        <div style={{ marginTop: '40px', display: 'flex', gap: '6px' }}>
           {['en', 'es'].map(l => (
-            <button key={l} onClick={() => setLang(l)} style={{ padding: '6px 18px', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: lang === l ? '#14B8A6' : '#e5e7eb', color: lang === l ? '#fff' : '#6b7280', fontWeight: '700', fontSize: '12px' }}>
+            <button key={l} onClick={() => setLang(l)} style={{ padding: '6px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: lang === l ? '#14B8A6' : 'rgba(255,255,255,0.1)', color: lang === l ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: '700', fontSize: '12px' }}>
               {l.toUpperCase()}
             </button>
           ))}
         </div>
-
+      </div>
+      {/* Right login panel */}
+      <div style={{ flex: 1, backgroundColor: '#F0F4F8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px' }}>
+        <div style={{ width: '100%', maxWidth: '420px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '6px' }}>{t.techPortal}</h1>
+          <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '32px' }}>Sign in to view your assigned work orders</p>
+          {error && <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: '#991b1b', marginBottom: '20px' }}>{error}</div>}
+          <div style={{ marginBottom: '18px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>{t.email}</label>
+            <input style={{ width: '100%', padding: '12px 14px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', color: '#111827', backgroundColor: '#fff', boxSizing: 'border-box' }} type="email" value={email} onChange={e => setEmail(e.target.value)} />
+          </div>
+          <div style={{ marginBottom: '28px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '6px' }}>{t.password}</label>
+            <input style={{ width: '100%', padding: '12px 14px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', color: '#111827', backgroundColor: '#fff', boxSizing: 'border-box' }} type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+          </div>
+          <button style={{ width: '100%', padding: '13px', backgroundColor: '#1B3A6B', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }} onClick={handleLogin} disabled={loading}>
+            {loading ? t.signingIn : t.signIn}
+          </button>
+        </div>
       </div>
     </div>
   );
