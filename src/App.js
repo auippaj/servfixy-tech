@@ -311,8 +311,8 @@ function LoginScreen({ onLogin, lang, setLang }) {
       <div style={{ width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
         {/* Logo + tagline */}
-        <img src="https://i.imgur.com/zJis2hK.png" alt="Servfixy" style={{ width: '440px', marginBottom: '10px' }} />
-        <div style={{ fontSize: '14px', color: '#14B8A6', fontStyle: 'italic', fontWeight: '600', marginBottom: '36px', letterSpacing: '0.01em' }}>Relax! We Got This.</div>
+        <img src="https://i.imgur.com/nvDoU8X.png" alt="Servfixy" style={{ width: '280px', marginBottom: '2px', display: 'block', margin: '0 auto 2px auto' }} />
+        <div style={{ fontSize: '14px', color: '#14B8A6', fontStyle: 'italic', fontWeight: '600', marginBottom: '24px', letterSpacing: '0.01em', textAlign: 'center' }}>Relax! We Got This.</div>
 
         {/* Login card */}
         <div style={{ width: '100%', backgroundColor: '#fff', borderRadius: '16px', padding: '36px 32px', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' }}>
