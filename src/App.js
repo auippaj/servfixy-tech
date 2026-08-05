@@ -311,7 +311,7 @@ function LoginScreen({ onLogin, lang, setLang }) {
       <div style={{ width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
         {/* Logo + tagline */}
-        <img src="https://i.imgur.com/zJis2hK.png" alt="Servfixy" style={{ width: '220px', marginBottom: '10px' }} />
+        <img src="https://i.imgur.com/zJis2hK.png" alt="Servfixy" style={{ width: '440px', marginBottom: '10px' }} />
         <div style={{ fontSize: '14px', color: '#14B8A6', fontStyle: 'italic', fontWeight: '600', marginBottom: '36px', letterSpacing: '0.01em' }}>Relax! We Got This.</div>
 
         {/* Login card */}
@@ -2770,7 +2770,7 @@ function App() {
         <div style={{ width: '220px', minWidth: '220px', backgroundColor: '#1B3A6B', display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 100 }}>
           {/* Logo */}
           <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
-            <img src="https://i.imgur.com/OKIqq0K.png" alt="Servfixy" style={{ width: '150px', height: 'auto' }} />
+            <img src="https://i.imgur.com/OKIqq0K.png" alt="Servfixy" style={{ width: '300px', height: 'auto' }} />
             <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '10px', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Technician Portal</div>
           </div>
           {/* Tech info */}
