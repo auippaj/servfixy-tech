@@ -2385,6 +2385,15 @@ function App() {
   const [myScore, setMyScore] = useState(null);
   const [rankNotif, setRankNotif] = useState(null); // 'up' | 'down' | null
 
+  // Reset to job list on every app mount — prevents stale mid-flow screens after reopen
+  useEffect(() => {
+    setScreen('list');
+    setSelectedJob(null);
+    setCheckInData(null);
+    setDiagData(null);
+    setGate1Data(null);
+  }, []);
+
   const handleSupportVideoCall = async () => {
     try {
       const res = await axios.post(`${API}/video/token`, {
