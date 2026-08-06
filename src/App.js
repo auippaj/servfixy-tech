@@ -762,6 +762,24 @@ function CheckInScreen({  job, tech, token, onComplete, onBack, lang, state, set
               </div>
             )}
           </div>
+          {job?.location_room && (
+            <div style={{ marginTop: '16px', backgroundColor: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '2px solid #14B8A6' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                <span style={{ fontSize: '22px' }}>🗺️</span>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: '800', color: '#14B8A6', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{lang === 'es' ? 'Ubicacion reportada por residente' : 'Resident Reported Location'}</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280' }}>{lang === 'es' ? 'Solo lectura — del ticket original' : 'Read-only — from original ticket'}</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#F0F4F8', borderRadius: '10px', padding: '14px 16px' }}>
+                <span style={{ fontSize: '28px' }}>📍</span>
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#1B3A6B' }}>{job.location_room}</div>
+                  {job.location_spot && <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '2px' }}>↳ {job.location_spot}</div>}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
