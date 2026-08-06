@@ -808,14 +808,26 @@ function CheckInScreen({  job, tech, token, onComplete, onBack, lang, state, set
             <div style={{ fontSize: '56px', marginBottom: '16px' }}>🦺</div>
             <div style={{ fontSize: '18px', fontWeight: '700', color: '#1B3A6B', marginBottom: '8px' }}>{lang === 'es' ? 'Confirmacion de EPP' : 'PPE Confirmation'}</div>
             <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '24px', lineHeight: '1.6' }}>{lang === 'es' ? 'Confirma que llevas el equipo de proteccion personal adecuado para este trabajo.' : 'Confirm you have the proper personal protective equipment for this job.'}</div>
-            {[['🥽', lang === 'es' ? 'Proteccion ocular' : 'Eye protection'], ['🧤', lang === 'es' ? 'Guantes' : 'Gloves'], ['👷', lang === 'es' ? 'Casco si aplica' : 'Hard hat if applicable'], ['👟', lang === 'es' ? 'Calzado de seguridad' : 'Safety footwear']].map(function(item) {
-              return (
-                <div key={item[1]} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', backgroundColor: '#F0F4F8', borderRadius: '10px', marginBottom: '8px', textAlign: 'left' }}>
-                  <span style={{ fontSize: '24px' }}>{item[0]}</span>
-                  <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>{item[1]}</span>
-                </div>
-              );
-            })}
+            {(() => {
+              const cat = (job?.category || '').toLowerCase();
+              const ppeMap = {
+                hvac: [['🥽','Safety glasses','Gafas de seguridad'],['🧤','Work gloves','Guantes de trabajo'],['😷','Mask','Mascarilla'],['👂','Hearing protection','Proteccion auditiva']],
+                electrical: [['🥽','Safety glasses','Gafas de seguridad'],['🧤','Voltage-rated rubber insulating gloves','Guantes aislantes de hule'],['👂','Hearing protection','Proteccion auditiva'],['🔒','Lockout/Tagout','Bloqueo/Etiquetado']],
+                plumbing: [['🥽','Safety glasses with side shields','Gafas con protectores laterales'],['🦵','Knee pads','Rodilleras'],['🧤','Work gloves','Guantes de trabajo'],['🧤','Nitrile gloves','Guantes de nitrilo']],
+                appliances: [['🥽','Safety glasses','Gafas de seguridad'],['🦵','Knee pads','Rodilleras'],['🧤','Work gloves','Guantes de trabajo'],['🧤','Nitrile gloves','Guantes de nitrilo']],
+                general: [['🥽','Safety glasses with side shields','Gafas con protectores laterales'],['🧤','Work gloves','Guantes de trabajo'],['🦺','High-visibility vest','Chaleco de alta visibilidad'],['👂','Hearing protection','Proteccion auditiva'],['🦵','Knee pads','Rodilleras'],['🧤','Disposable nitrile gloves','Guantes desechables de nitrilo']],
+              };
+              const key = Object.keys(ppeMap).find(k => cat.includes(k)) || 'general';
+              const items = ppeMap[key];
+              return items.map(function(item) {
+                return (
+                  <div key={item[1]} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', backgroundColor: '#F0F4F8', borderRadius: '10px', marginBottom: '8px', textAlign: 'left' }}>
+                    <span style={{ fontSize: '24px' }}>{item[0]}</span>
+                    <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>{lang === 'es' ? item[2] : item[1]}</span>
+                  </div>
+                );
+              });
+            })()}
           </div>
           <button style={{ backgroundColor: '#1B3A6B', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginBottom: '10px' }} onClick={() => { setState({ ppeConfirmed: true, step: isHvac ? 'hvac' : 'photos' }); }}>
             {lang === 'es' ? 'Confirmo - Tengo mi EPP' : 'Confirmed - I have my PPE'}
