@@ -28,20 +28,13 @@ jobs:
 
       - name: Notify on failure
         if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "❌ Build Failed — ${{ github.repository }}"
-          to: james@servfixy.com
-          from: Servfixy CI <james@servfixy.com>
-          body: |
-            Build failed on ${{ github.repository }}
-            Branch: ${{ github.ref_name }}
-            Commit: ${{ github.sha }}
-            Triggered by: ${{ github.actor }}
-
-            View the full log:
-            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -s -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "from": "Servfixy CI <noreply@servfixy.com>",
+              "to": ["james@servfixy.com"],
+              "subject": "❌ Build Failed — ${{ github.repository }}",
+              "text": "Build failed on ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\nTriggered by: ${{ github.actor }}\n\nView the full log:\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }'
