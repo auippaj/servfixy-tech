@@ -307,11 +307,11 @@ function LoginScreen({ onLogin, lang, setLang }) {
     setLoading(false);
   };
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', fontFamily: "'Inter', system-ui, sans-serif", padding: '24px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', fontFamily: "'Inter', system-ui, sans-serif", padding: '8px 16px' }}>
       <div style={{ width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
         {/* Logo */}
-        <img src="/servfixy-logo.png" alt="Servfixy" style={{ width: '280px', marginBottom: '36px' }} />
+        <img src="/servfixy-logo.png" alt="Servfixy" style={{ width: '420px', marginBottom: '16px' }} />
 
         {/* Heading */}
         <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#111827', marginBottom: '28px', alignSelf: 'flex-start' }}>{t.techPortal}</h1>
@@ -792,7 +792,7 @@ function CheckInScreen({  job, tech, token, onComplete, onBack, lang, state, set
 
       {showRvcPicker && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '16px 16px 0 0', padding: '24px', width: '100%', maxWidth: '430px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '16px 16px 0 0', padding: '8px 16px', width: '100%', maxWidth: '430px' }}>
             <div style={{ fontSize: '16px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>{lang === 'es' ? 'Como confirmo el residente?' : 'How did the resident confirm?'}</div>
             <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>{lang === 'es' ? 'Selecciona el metodo de confirmacion' : 'Select the confirmation method'}</div>
             {['In person - face to face', 'Resident showed notification on phone', 'Resident verbally confirmed code', 'Left door tag - no contact'].map(function(method) {
@@ -1045,7 +1045,7 @@ const handleHvacAnalysis = async () => {
       })()}
       {step === 'photos' && (
         <div style={{ padding: '24px 16px' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '16px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '8px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '16px' }}>
             <div style={{ fontSize: '16px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>{t.beforePhotos}</div>
             <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '20px' }}>{t.photoInstruction}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
@@ -2123,7 +2123,7 @@ function VideoCallScreen({ job, token, roomName, onBack, lang }) {
       )}
 
       {error && (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: 'white', padding: '24px', textAlign: 'center' }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: 'white', padding: '8px 16px', textAlign: 'center' }}>
           <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
           <div style={{ fontSize: '16px', fontWeight: '600', color: '#ef4444' }}>{error}</div>
           <button onClick={onBack} style={{ marginTop: '20px', backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>Go Back</button>
@@ -2923,7 +2923,7 @@ function App() {
       })()}
       {screen === 'list' && <JobList tech={tech} token={token} onSelectJob={(job) => { setSelectedJob(job); setScreen('detail'); }} lang={lang} onShow911={() => setShow911Confirm(true)} onSupportCall={handleSupportCall} onStartCheckin={(job) => { setSelectedJob(job); resetJobState(); setScreen('checkin'); }} />}
       {screen === 'turn_tasks' && (
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '8px 16px' }}>
           <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '800', color: '#111827' }}>🏠 Turn Tasks</h2>
           {myTasksLoading ? (
             <div style={{ color: '#94a3b8', fontSize: '13px' }}>Loading turn tasks...</div>
@@ -2962,7 +2962,7 @@ function App() {
         </div>
       )}
       {screen === 'history' && (
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '8px 16px' }}>
           <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '800', color: '#111827' }}>🕐 Job History</h2>
           <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0', color: '#94a3b8' }}>
             <div style={{ fontSize: '32px', marginBottom: '10px' }}>🕐</div>
@@ -2971,7 +2971,7 @@ function App() {
         </div>
       )}
       {screen === 'tasks' && (
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '8px 16px' }}>
           <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '800', color: '#111827' }}>✅ Tasks</h2>
           <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0', color: '#94a3b8' }}>
             <div style={{ fontSize: '32px', marginBottom: '10px' }}>✅</div>
@@ -3010,7 +3010,7 @@ function App() {
       {screen === "turn_tasks" && selectedTurn && <TurnTaskScreen turn={selectedTurn} token={token} tech={tech} onBack={() => setScreen("turns")} onDone={() => setScreen("turns")} />}
       {show911Confirm && (
         
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '24px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '8px 16px' }}>
           <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px 24px', width: '100%', maxWidth: '380px', textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>🚨</div>
             <div style={{ fontSize: '20px', fontWeight: '800', color: '#ef4444', marginBottom: '8px' }}>Call 911?</div>
@@ -3025,7 +3025,7 @@ function App() {
         </div>
       )}
       {showSupportUnavailable && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '24px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '8px 16px' }}>
           <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '32px 24px', width: '100%', maxWidth: '380px', textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>🕐</div>
             <div style={{ fontSize: '18px', fontWeight: '800', color: '#1B3A6B', marginBottom: '12px' }}>Support Unavailable</div>
@@ -3071,7 +3071,7 @@ function ScoreboardScreen({ tech, token, myScore, lang, onBack }) {
   };
 
   return (
-    <div style={{ padding: '24px', paddingBottom: '80px', overflowY: 'auto', height: 'calc(100vh - 60px)' }}>
+    <div style={{ padding: '8px 16px', paddingBottom: '80px', overflowY: 'auto', height: 'calc(100vh - 60px)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#111827' }}>🏆 Fixy Score Leaderboard</h2>
