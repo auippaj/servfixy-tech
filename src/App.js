@@ -314,7 +314,7 @@ function LoginScreen({ onLogin, lang, setLang }) {
         <img src="/servfixy-logo.png" alt="Servfixy" style={{ width: '420px', marginBottom: '16px' }} />
 
         {/* Heading */}
-        <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#111827', marginBottom: '28px', alignSelf: 'flex-start' }}>{t.techPortal}</h1>
+        <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#111827', marginBottom: '28px', alignSelf: 'flex-start' }}>Technicians</h1>
 
         {error && (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: '#991b1b', marginBottom: '16px', width: '100%', boxSizing: 'border-box' }}>
