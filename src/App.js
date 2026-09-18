@@ -311,7 +311,7 @@ function LoginScreen({ onLogin, lang, setLang }) {
       <div style={{ width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
         {/* Logo */}
-        <img src="https://i.imgur.com/nvDoU8X.png" alt="Servfixy" style={{ width: '280px', marginBottom: '36px' }} />
+        <img src="/servfixy-logo.png" alt="Servfixy" style={{ width: '280px', marginBottom: '36px' }} />
 
         {/* Heading */}
         <h1 style={{ fontSize: '26px', fontWeight: '700', color: '#111827', marginBottom: '28px', alignSelf: 'flex-start' }}>{t.techPortal}</h1>
@@ -2812,7 +2812,7 @@ function App() {
         <div style={{ width: '220px', minWidth: '220px', backgroundColor: '#1B3A6B', display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 100 }}>
           {/* Logo */}
           <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
-            <img src="https://i.imgur.com/OKIqq0K.png" alt="Servfixy" style={{ width: '150px', height: 'auto' }} />
+            <img src="/servfixy-logo.png" alt="Servfixy" style={{ width: '150px', height: 'auto' }} />
             <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '10px', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Technician Portal</div>
           </div>
           {/* Tech info */}
