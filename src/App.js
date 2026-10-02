@@ -2431,9 +2431,9 @@ function LsAlertOverlay({ pages, token, lang, onDone }) {
           await axios.post(`${API}/ls-pages/${page.id}/ack`,
             { lat: pos.coords.latitude, lng: pos.coords.longitude },
             { headers: { Authorization: `Bearer ${token}` } });
-          onDone(page.id);
+          onDone(page.id, true);
         } catch (e) {
-          if (e.response && e.response.status === 409) onDone(page.id); // someone else already accepted
+          if (e.response && e.response.status === 409) onDone(page.id, false); // someone else already accepted
           else setError((e.response && e.response.data && e.response.data.error) || (es ? 'No se pudo enviar. Intenta de nuevo.' : 'Could not send. Try again.'));
         }
         setBusy(false);
@@ -2484,6 +2484,29 @@ function App() {
   const [myScore, setMyScore] = useState(null);
   const [rankNotif, setRankNotif] = useState(null); // 'up' | 'down' | null
   const [lsPages, setLsPages] = useState([]);
+  // After EN ROUTE, share position every 15s until the server says tracking is over (arrival).
+  const [lsTrackIds, setLsTrackIds] = useState(() => { try { return JSON.parse(localStorage.getItem('sfxLsTrack') || '[]'); } catch (e) { return []; } });
+  useEffect(() => {
+    try { localStorage.setItem('sfxLsTrack', JSON.stringify(lsTrackIds)); } catch (e) { /* ignore */ }
+    if (!lsTrackIds.length || !token) return undefined;
+    const send = () => {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        for (const id of lsTrackIds) {
+          try {
+            await axios.post(`${API}/ls-pages/${id}/location`,
+              { lat: pos.coords.latitude, lng: pos.coords.longitude },
+              { headers: { Authorization: `Bearer ${token}` } });
+          } catch (e) {
+            if (e.response && (e.response.status === 403 || e.response.status === 404)) setLsTrackIds(prev => prev.filter(x => x !== id));
+          }
+        }
+      }, () => {}, { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 });
+    };
+    send();
+    const iv = setInterval(send, 15000);
+    return () => clearInterval(iv);
+  }, [lsTrackIds, token]);
   const fetchLsPages = React.useCallback(async () => {
     const tk = localStorage.getItem('techToken');
     if (!tk) { setLsPages([]); return; }
@@ -3064,7 +3087,7 @@ function App() {
         </div>
       )}
       {screen === 'scoreboard' && <ScoreboardScreen tech={tech} token={token} myScore={myScore} lang={lang} onBack={() => setScreen('list')} />}
-      {lsPages.length > 0 && <LsAlertOverlay pages={lsPages} token={token} lang={lang} onDone={(id) => setLsPages(prev => prev.filter(x => x.id !== id))} />}
+      {lsPages.length > 0 && <LsAlertOverlay pages={lsPages} token={token} lang={lang} onDone={(id, acked) => { setLsPages(prev => prev.filter(x => x.id !== id)); if (acked) setLsTrackIds(prev => prev.includes(id) ? prev : [...prev, id]); }} />}
       {/* Rank change notification */}
       {rankNotif && (
         <div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', zIndex: 9998, animation: 'sfxPulse 0.5s ease-in-out' }}>
