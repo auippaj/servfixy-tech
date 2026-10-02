@@ -2408,6 +2408,62 @@ function JobHistoryScreen({ tech, token, lang, onBack }) {
   );
 }
 
+function LsAlertOverlay({ pages, token, lang, onDone }) {
+  const es = lang === 'es';
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const page = pages[0];
+
+  useEffect(() => {
+    if (navigator.vibrate) navigator.vibrate([400, 200, 400, 200, 400]);
+  }, [page && page.id]);
+
+  const enRoute = () => {
+    setError('');
+    if (!navigator.geolocation) {
+      setError(es ? 'Este dispositivo no tiene GPS.' : 'This device has no GPS.');
+      return;
+    }
+    setBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          await axios.post(`${API}/ls-pages/${page.id}/ack`,
+            { lat: pos.coords.latitude, lng: pos.coords.longitude },
+            { headers: { Authorization: `Bearer ${token}` } });
+          onDone(page.id);
+        } catch (e) {
+          if (e.response && e.response.status === 409) onDone(page.id); // someone else already accepted
+          else setError((e.response && e.response.data && e.response.data.error) || (es ? 'No se pudo enviar. Intenta de nuevo.' : 'Could not send. Try again.'));
+        }
+        setBusy(false);
+      },
+      () => {
+        setBusy(false);
+        setError(es ? 'Activa la ubicacion (GPS) y toca EN CAMINO de nuevo.' : 'Turn on location (GPS), then tap EN ROUTE again.');
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  };
+
+  if (!page) return null;
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10000, backgroundColor: '#B91C1C', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', fontFamily: 'Arial, sans-serif' }}>
+      <div style={{ fontSize: '56px', marginBottom: '8px' }}>🚨</div>
+      <div style={{ fontSize: '28px', fontWeight: '900', letterSpacing: '1px', marginBottom: '16px' }}>{es ? 'EMERGENCIA DE SEGURIDAD' : 'LIFE SAFETY ALERT'}</div>
+      <div style={{ fontSize: '20px', fontWeight: '700', marginBottom: '4px' }}>{page.property_name}{page.unit_number ? ` — ${es ? 'Unidad' : 'Unit'} ${page.unit_number}` : ''}</div>
+      <div style={{ fontSize: '17px', opacity: 0.95, marginBottom: '28px', maxWidth: '420px' }}>{page.title}</div>
+      <button onClick={enRoute} disabled={busy}
+        style={{ width: '100%', maxWidth: '420px', padding: '22px', fontSize: '26px', fontWeight: '900', backgroundColor: '#fff', color: '#B91C1C', border: 'none', borderRadius: '16px', cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1 }}>
+        {busy ? (es ? 'Obteniendo GPS...' : 'Getting GPS...') : (es ? 'EN CAMINO' : 'EN ROUTE')}
+      </button>
+      <div style={{ fontSize: '13px', marginTop: '14px', opacity: 0.9 }}>{es ? 'El GPS debe estar activado para confirmar.' : 'GPS must be on to confirm.'}</div>
+      {error && <div style={{ marginTop: '14px', backgroundColor: 'rgba(0,0,0,0.3)', padding: '10px 14px', borderRadius: '10px', fontSize: '14px', fontWeight: '700', maxWidth: '420px' }}>{error}</div>}
+      {pages.length > 1 && <div style={{ marginTop: '14px', fontSize: '13px', opacity: 0.9 }}>{es ? `${pages.length - 1} alerta(s) mas pendiente(s)` : `${pages.length - 1} more alert(s) waiting`}</div>}
+    </div>
+  );
+}
+
 function App() {
   const [tech, setTech] = useState(() => { const s = localStorage.getItem('techUser'); return s ? JSON.parse(s) : null; });
   const [token, setToken] = useState(() => localStorage.getItem('techToken') || '');
@@ -2427,6 +2483,32 @@ function App() {
   const [myTasksLoading, setMyTasksLoading] = useState(false);
   const [myScore, setMyScore] = useState(null);
   const [rankNotif, setRankNotif] = useState(null); // 'up' | 'down' | null
+  const [lsPages, setLsPages] = useState([]);
+  const fetchLsPages = React.useCallback(async () => {
+    const tk = localStorage.getItem('techToken');
+    if (!tk) { setLsPages([]); return; }
+    try {
+      const r = await fetch(`${API}/ls-pages/mine`, { headers: { Authorization: `Bearer ${tk}` } });
+      if (!r.ok) return;
+      const d = await r.json();
+      setLsPages(Array.isArray(d.pages) ? d.pages : []);
+    } catch (e) { /* offline: keep what we have */ }
+  }, []);
+  useEffect(() => {
+    if (!token) return undefined;
+    fetchLsPages();
+    const iv = setInterval(fetchLsPages, 20000);
+    const refresh = () => fetchLsPages();
+    window.addEventListener('focus', refresh);
+    window.addEventListener('sfx-ls-refresh', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(iv);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('sfx-ls-refresh', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [token, fetchLsPages]);
 
   // Reset to job list on every app mount — prevents stale mid-flow screens after reopen
   useEffect(() => {
@@ -2538,6 +2620,7 @@ function App() {
     // Foreground push notifications — show browser notification
     const unsubPush = onForegroundMessage((payload) => {
       const { title, body } = payload.notification || {};
+      if (payload.data && payload.data.type === 'ls_page') window.dispatchEvent(new Event('sfx-ls-refresh'));
       if (Notification.permission === 'granted' && title) {
         new Notification(title, { body, icon: '/logo192.png' });
       }
@@ -2981,6 +3064,7 @@ function App() {
         </div>
       )}
       {screen === 'scoreboard' && <ScoreboardScreen tech={tech} token={token} myScore={myScore} lang={lang} onBack={() => setScreen('list')} />}
+      {lsPages.length > 0 && <LsAlertOverlay pages={lsPages} token={token} lang={lang} onDone={(id) => setLsPages(prev => prev.filter(x => x.id !== id))} />}
       {/* Rank change notification */}
       {rankNotif && (
         <div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', zIndex: 9998, animation: 'sfxPulse 0.5s ease-in-out' }}>
