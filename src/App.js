@@ -2469,6 +2469,7 @@ function App() {
   const [token, setToken] = useState(() => localStorage.getItem('techToken') || '');
   const [selectedJob, setSelectedJob] = useState(null);
   const [screen, setScreen] = useState('list');
+  const [sidebarHidden, setSidebarHidden] = useState(false);
   const [selectedTurn, setSelectedTurn] = useState(null);
   const [walkType, setWalkType] = useState('notice');
   const [checkInData, setCheckInData] = useState(null);
@@ -2915,12 +2916,18 @@ function App() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif', backgroundColor: '#F0F4F8' }}>
       {/* Sidebar — hidden on checkin/diagnosis/gate1 screens */}
-      {screen !== 'checkin' && screen !== 'diagnosis' && screen !== 'gate1' && (
+      {sidebarHidden && screen !== 'checkin' && screen !== 'diagnosis' && screen !== 'gate1' && (
+        <button onClick={() => setSidebarHidden(false)} title='Show sidebar' style={{ position: 'fixed', left: 0, top: '14px', zIndex: 200, background: '#185FA5', color: '#ffffff', border: 'none', borderRadius: '0 8px 8px 0', padding: '10px 12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', boxShadow: '2px 2px 8px rgba(0,0,0,0.25)' }}>{'>>'}</button>
+      )}
+      {!sidebarHidden && screen !== 'checkin' && screen !== 'diagnosis' && screen !== 'gate1' && (
         <div style={{ width: '220px', minWidth: '220px', backgroundColor: '#185FA5', display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 100 }}>
           {/* Logo */}
           <div style={{ padding: '20px', background: '#ffffff', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
             <img src="https://i.imgur.com/OPDKgyD.png" alt="Servfixy" style={{ width: '150px', height: 'auto' }} />
             <div style={{ color: '#185FA5', fontSize: '10px', fontWeight: '700', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Technician Portal</div>
+          </div>
+          <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'flex-end', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+            <button onClick={() => setSidebarHidden(true)} title='Hide sidebar' style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', fontSize: '14px', fontWeight: '700', padding: '4px 8px', lineHeight: 1, borderRadius: '4px' }}>{'<<'}</button>
           </div>
           {/* Tech info */}
           <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -2977,7 +2984,7 @@ function App() {
         </div>
       )}
       {/* Main content area */}
-      <div style={{ marginLeft: screen !== 'checkin' && screen !== 'diagnosis' && screen !== 'gate1' ? '220px' : '0', flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{ marginLeft: screen !== 'checkin' && screen !== 'diagnosis' && screen !== 'gate1' && !sidebarHidden ? '220px' : '0', flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <OfflineBanner />
       {screen !== 'checkin' && screen !== 'diagnosis' && screen !== 'gate1' && (
         <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #e2e8f0', padding: '0 24px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
