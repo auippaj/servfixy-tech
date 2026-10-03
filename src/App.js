@@ -2916,11 +2916,11 @@ function App() {
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif', backgroundColor: '#F0F4F8' }}>
       {/* Sidebar — hidden on checkin/diagnosis/gate1 screens */}
       {screen !== 'checkin' && screen !== 'diagnosis' && screen !== 'gate1' && (
-        <div style={{ width: '220px', minWidth: '220px', backgroundColor: '#1B3A6B', display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 100 }}>
+        <div style={{ width: '220px', minWidth: '220px', backgroundColor: '#185FA5', display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, zIndex: 100 }}>
           {/* Logo */}
-          <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+          <div style={{ padding: '20px', background: '#ffffff', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
             <img src="https://i.imgur.com/OPDKgyD.png" alt="Servfixy" style={{ width: '150px', height: 'auto' }} />
-            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '10px', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Technician Portal</div>
+            <div style={{ color: '#185FA5', fontSize: '10px', fontWeight: '700', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Technician Portal</div>
           </div>
           {/* Tech info */}
           <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -2930,7 +2930,7 @@ function App() {
               </div>
               <div>
                 <div style={{ color: '#fff', fontSize: '13px', fontWeight: '600' }}>{tech.first_name} {tech.last_name}</div>
-                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '11px' }}>{tech.certification_level || 'S1 Specialist'}</div>
+                <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px' }}>{tech.certification_level || 'S1 Specialist'}</div>
               </div>
             </div>
             {myScore?.score && (
@@ -2941,7 +2941,7 @@ function App() {
                 <span style={{ color: '#14B8A6', fontSize: '12px', fontWeight: '700' }}>
                   #{myScore.score.rank} of {myScore.total_techs}
                 </span>
-                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px' }}>
                   {myScore.score.fixy_score} pts
                 </span>
               </div>
@@ -2956,7 +2956,7 @@ function App() {
               const isActive = screen === item.key;
               return (
                 <button key={item.key} onClick={() => { haptic([10]); setScreen(item.key); setSelectedJob(null); }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px', backgroundColor: isActive ? 'rgba(20,184,166,0.15)' : 'transparent', color: isActive ? '#14B8A6' : 'rgba(255,255,255,0.65)', fontSize: '13px', fontWeight: isActive ? '600' : '400', textAlign: 'left' }}>
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px', backgroundColor: isActive ? 'rgba(255,255,255,0.18)' : 'transparent', color: isActive ? '#ffffff' : 'rgba(255,255,255,0.9)', fontSize: '13px', fontWeight: isActive ? '600' : '400', textAlign: 'left' }}>
                   <span style={{ fontSize: '15px' }}>{item.icon}</span>
                   {item.label}
                 </button>
@@ -2967,12 +2967,12 @@ function App() {
           <div style={{ padding: '12px 10px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ display: 'flex', gap: '6px' }}>
               {['en', 'es'].map(l => (
-                <button key={l} onClick={() => handleLangChange(l)} style={{ flex: 1, padding: '5px', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: lang === l ? '#14B8A6' : 'rgba(255,255,255,0.1)', color: lang === l ? '#fff' : 'rgba(255,255,255,0.5)', fontWeight: '700', fontSize: '11px' }}>
+                <button key={l} onClick={() => handleLangChange(l)} style={{ flex: 1, padding: '5px', border: 'none', borderRadius: '6px', cursor: 'pointer', backgroundColor: lang === l ? '#14B8A6' : 'rgba(255,255,255,0.1)', color: lang === l ? '#fff' : 'rgba(255,255,255,0.85)', fontWeight: '700', fontSize: '11px' }}>
                   {l.toUpperCase()}
                 </button>
               ))}
             </div>
-            <button onClick={handleLogout} style={{ width: '100%', padding: '9px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: 'rgba(255,255,255,0.55)', fontSize: '12px', cursor: 'pointer' }}>{t.logOut}</button>
+            <button onClick={handleLogout} style={{ width: '100%', padding: '9px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '12px', cursor: 'pointer' }}>{t.logOut}</button>
           </div>
         </div>
       )}
