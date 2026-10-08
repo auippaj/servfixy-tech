@@ -1100,6 +1100,7 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
   const {
     mode, system, category, cause, diagnosis, parts, newPart,
     deferralReason, deferralNotes, deferralNextSteps, checkInTimeMs,
+    closeHvacLow, closeHvacHigh,
   } = state;
   const [timeOnSite, setTimeOnSite] = useState('');
   const [listening, setListening] = useState(false);
@@ -1142,7 +1143,9 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
 
   const diagnosisOk = diagnosis.trim().length >= 100;
   const rootCauseOk = system && category && cause;
-  const canSubmitCompleted = diagnosisOk && rootCauseOk;
+  const needsHvacReadings = system === 'HVAC' && !(checkInData?.hvacLow && checkInData?.hvacHigh);
+  const hvacReadingsOk = !needsHvacReadings || (closeHvacLow && closeHvacHigh);
+  const canSubmitCompleted = diagnosisOk && rootCauseOk && hvacReadingsOk;
 
   const deferralReasons = lang === 'es'
     ? ['Piezas no disponibles', 'Residente no en casa', 'Problema de acceso', 'Requiere especialista/proveedor', 'Problema de seguridad', 'Requiere aprobacion del propietario', 'Otro']
@@ -1153,7 +1156,7 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
 
   const handleSubmit = () => {
     if (mode === 'completed') {
-      onComplete({ mode: 'completed', system, category, cause, diagnosis, parts, timeOnSite });
+      onComplete({ mode: 'completed', system, category, cause, diagnosis, parts, timeOnSite, hvacLow: needsHvacReadings ? closeHvacLow : null, hvacHigh: needsHvacReadings ? closeHvacHigh : null });
     } else {
       onComplete({ mode: 'deferred', deferralReason, deferralNotes, deferralNextSteps, timeOnSite, parts });
     }
@@ -1310,6 +1313,23 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
               )}
             </div>
 
+            {needsHvacReadings && (
+              <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', marginBottom: '12px', border: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: '15px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>{lang === 'es' ? '🌡️ Lecturas de presion HVAC' : '🌡️ HVAC Pressure Readings'}</div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>{lang === 'es' ? 'Requerido para todas las ordenes HVAC' : 'Required for all HVAC orders'}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px', textTransform: 'uppercase' }}>{lang === 'es' ? 'Lado bajo (PSI)' : 'Low side (PSI)'}</label>
+                    <input type="number" inputMode="decimal" value={closeHvacLow} onChange={e => setState({ closeHvacLow: e.target.value })} placeholder="e.g. 118" style={{ width: '100%', padding: '12px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '16px', boxSizing: 'border-box', color: '#111827', backgroundColor: 'white' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '6px', textTransform: 'uppercase' }}>{lang === 'es' ? 'Lado alto (PSI)' : 'High side (PSI)'}</label>
+                    <input type="number" inputMode="decimal" value={closeHvacHigh} onChange={e => setState({ closeHvacHigh: e.target.value })} placeholder="e.g. 340" style={{ width: '100%', padding: '12px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '16px', boxSizing: 'border-box', color: '#111827', backgroundColor: 'white' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', marginBottom: '12px' }}>
               <div style={{ fontSize: '15px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>📝 {lang === 'es' ? 'Diagnostico y Cierre' : 'Diagnosis & Completion'}</div>
               <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>{t.diagnosisMin}</div>
@@ -1374,6 +1394,7 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
               {!canSubmitCompleted && (
                 <div style={{ marginBottom: '12px' }}>
                   {!rootCauseOk && <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{t.warnRootCause}</div>}
+                  {rootCauseOk && !hvacReadingsOk && <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{lang === 'es' ? '⚠ Ingresa presion baja y alta' : '⚠ Enter low and high side pressure'}</div>}
                   {!diagnosisOk && <div style={{ fontSize: '13px', color: '#6b7280' }}>{t.warnDiagnosis} {Math.max(0, 100 - diagnosis.trim().length)} {t.moreChars}</div>}
                 </div>
               )}
@@ -2355,6 +2376,8 @@ const initialDiagnosisState = {
   category: '',
   cause: '',
   diagnosis: '',
+  closeHvacLow: '',
+  closeHvacHigh: '',
   parts: [],
   newPart: { name: '', qty: 1, cost: '' },
   deferralReason: '',
@@ -2761,8 +2784,8 @@ function App() {
         signed: data.signed,
         gps_checkout_lat: data.gpsOut?.lat || null,
         gps_checkout_lng: data.gpsOut?.lng || null,
-        hvac_low_side_psi: checkInData?.hvacLow || null,
-        hvac_high_side_psi: checkInData?.hvacHigh || null,
+        hvac_low_side_psi: checkInData?.hvacLow || diagData?.hvacLow || null,
+        hvac_high_side_psi: checkInData?.hvacHigh || diagData?.hvacHigh || null,
         refrigerant_type: checkInData?.refrigerantType || null,
         expansion_valve_type: checkInData?.expansionValve || null,
         suction_line_temp: checkInData?.suctionTemp || null,
