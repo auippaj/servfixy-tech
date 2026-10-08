@@ -613,6 +613,15 @@ function generateRVC(jobId) {
 // ── CheckInScreen ──
 // State is now lifted to App and passed in as `state` + `setState`.
 // `setState` merges partial updates, e.g. setState({ step: 'rvc' }).
+// HVAC detection: every HVAC ticket must get the Gauges step (low/high pressure entry).
+const HVAC_RE = /hvac|\ba\/?c\b|air[\s-]?cond|air[\s-]?handler|\bair\b|thermostat|furnace|heat[\s-]?pump|compressor|condenser|evaporator|refrigerant|freon|\bcoils?\b|blower|mini[\s-]?split|ductwork|\bducts?\b|airflow|\bcool(?:ing)?\b|\bheat(?:ing)?\b|warm air|not cold|too hot|too warm|\bcold air\b|\bvent(?:s|ilation)?\b/i;
+const isHvacJob = (job) => {
+  if (!job) return false;
+  const text = [job.title, job.description, job.category, job.subcategory, job.type, job.issue_type, job.trade, job.triage_assessment, job.root_cause_system]
+    .filter(Boolean).join(' ');
+  return HVAC_RE.test(text);
+};
+
 function CheckInScreen({  job, tech, token, onComplete, onBack, lang, state, setState , onShow911, onSupportCall }) {
   const t = STRINGS[lang];
   const {
@@ -621,7 +630,7 @@ function CheckInScreen({  job, tech, token, onComplete, onBack, lang, state, set
     expansionValve, suctionTemp, liquidTemp, hvacAnalysis, hvacAnalysisLoading,
   } = state;
 
-  const isHvac = job?.title?.toLowerCase().includes('hvac') || job?.description?.toLowerCase().includes('hvac') || job?.title?.toLowerCase().includes('ac ') || job?.title?.toLowerCase().includes('air') || job?.description?.toLowerCase().includes('cooling') || job?.description?.toLowerCase().includes('heating') || job?.category?.toLowerCase().includes('hvac') || (job?.title || '').toLowerCase().includes('hvac') || (job?.description || '').toLowerCase().includes('hvac') || (job?.description || '').toLowerCase().includes('ac ') || (job?.description || '').toLowerCase().includes('cold');
+  const isHvac = isHvacJob(job);
   const steps = isHvac ? [t.gpsStep, t.rvcStep, 'PPE', 'Gauges', t.photosStep] : [t.gpsStep, t.rvcStep, 'PPE', t.photosStep];
   const stepIndex = step === 'gps' ? 0 : step === 'rvc' ? 1 : step === 'ppe' ? 2 : step === 'hvac' ? 3 : (isHvac ? 4 : 3);
   const photoInputRef = useRef(null);
