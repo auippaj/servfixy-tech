@@ -471,7 +471,7 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall, onS
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center' }}>
             <div style={{ fontSize: '36px', marginBottom: '12px' }}>✅</div>
             <div style={{ fontWeight: '700', color: '#1B3A6B', fontSize: '15px', marginBottom: '4px' }}>{t.noJobs}</div>
-            <div style={{ fontSize: '13px', color: '#9ca3af' }}>{lang === 'es' ? 'Todo esta bajo control. Buen trabajo.' : 'Queue is clear. Great work.'}</div>
+            <div style={{ fontSize: '13px', color: '#6b7280' }}>{lang === 'es' ? 'Todo esta bajo control. Buen trabajo.' : 'Queue is clear. Great work.'}</div>
           </div>
         )}
 
@@ -514,7 +514,7 @@ function JobList({ tech, token, onSelectJob, lang, onShow911, onSupportCall, onS
       {/* Right detail panel */}
       <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#F0F4F8', paddingBottom: '56px' }}>
         {!selectedJob ? (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔧</div>
             <div style={{ fontSize: '15px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>Select a job</div>
             <div style={{ fontSize: '13px' }}>Click any work order on the left to view details</div>
@@ -568,7 +568,7 @@ function TurnWalkList({ tech, token, lang, onBack, onStartWalk }) {
   return (
     <div style={{ paddingBottom: '80px', backgroundColor: '#f3f4f6', minHeight: '100vh' }}>
       <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer', padding: '0' }}>←</button>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#111827', fontSize: '20px', cursor: 'pointer', padding: '0' }}>←</button>
         <span style={{ fontWeight: '700', fontSize: '17px' }}>Turn Walks</span>
       </div>
       {loading && <div style={{ padding: '32px', textAlign: 'center', color: '#6b7280' }}>Loading turns...</div>}
@@ -712,7 +712,7 @@ function CheckInScreen({  job, tech, token, onComplete, onBack, lang, state, set
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', paddingBottom: '80px' }}>
       <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '8px' }}>{t.backToJob}</button>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#111827', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '8px' }}>{t.backToJob}</button>
         <div style={{ fontSize: '16px', fontWeight: '700' }}>{t.checkIn} - {t.unit} {job.unit_number || ''}</div>
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>{job.property_name}</div>
       </div>
@@ -962,7 +962,7 @@ const handleHvacAnalysis = async () => {
                     </button>
                   ))}
                 </div>
-                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>{lang === 'es' ? 'TXV es el predeterminado — cambia si la unidad usa orificio fijo' : 'TXV is default — change if unit uses fixed orifice'}</div>
+                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>{lang === 'es' ? 'TXV es el predeterminado — cambia si la unidad usa orificio fijo' : 'TXV is default — change if unit uses fixed orifice'}</div>
               </div>
               <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginBottom: '8px' }}>
                 <div style={{ fontSize: '13px', fontWeight: '700', color: '#111827', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔵 {lang === 'es' ? 'Lado bajo (succion)' : 'Low Side (Suction)'}</div>
@@ -1043,7 +1043,7 @@ const handleHvacAnalysis = async () => {
               </div>
             )}
             {!canContinue && (
-              <button style={{ backgroundColor: '#d1d5db', color: 'white', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'not-allowed', width: '100%', marginBottom: '10px' }} disabled>
+              <button style={{ backgroundColor: '#d1d5db', color: '#111827', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: '700', cursor: 'not-allowed', width: '100%', marginBottom: '10px' }} disabled>
                 {lang === 'es' ? 'Completa todas las lecturas' : 'Complete all readings'}
               </button>
             )}
@@ -1183,7 +1183,7 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', paddingBottom: '100px' }}>
       <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '8px' }}>{t.back}</button>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#111827', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '8px' }}>{t.back}</button>
         <div style={{ fontSize: '16px', fontWeight: '700' }}>{lang === 'es' ? 'Diagnostico y Cierre' : 'Diagnosis & Completion'} - {t.unit} {job.unit_number || ''}</div>
         {checkedIn && <button onClick={() => onVideoCall(job)} style={{ marginTop: '8px', backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', width: '100%' }}>📹 Start Video Call</button>}
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>{job.property_name}</div>
@@ -1250,7 +1250,7 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
                 <span style={{ fontSize: '12px', color: deferralNotes.trim().length >= 50 ? '#15803d' : deferListening ? '#ef4444' : '#6b7280' }}>
                   {deferralNotes.trim().length >= 50 ? '✅ ' + (lang === 'es' ? 'Minimo alcanzado' : 'Minimum met') : deferListening ? '🎤 ' + (lang === 'es' ? 'Escuchando...' : 'Listening...') : `${deferralNotes.trim().length} / 50 ${t.chars}`}
                 </span>
-                <span style={{ fontSize: '12px', color: '#9ca3af' }}>{deferralNotes.length} {t.chars}</span>
+                <span style={{ fontSize: '12px', color: '#6b7280' }}>{deferralNotes.length} {t.chars}</span>
               </div>
             </div>
 
@@ -1357,7 +1357,7 @@ function DiagnosisScreen({  job, tech, token, checkInData, onComplete, onBack, l
                 <span style={{ fontSize: '12px', color: diagnosisOk ? '#15803d' : listening ? '#ef4444' : '#6b7280' }}>
                   {diagnosisOk ? t.minimumMet : listening ? (lang === 'es' ? '🎤 Escuchando...' : '🎤 Listening...') : `${diagnosis.trim().length} / 100 ${t.chars}`}
                 </span>
-                <span style={{ fontSize: '12px', color: '#9ca3af' }}>{diagnosis.length} {t.chars}</span>
+                <span style={{ fontSize: '12px', color: '#6b7280' }}>{diagnosis.length} {t.chars}</span>
               </div>
             </div>
 
@@ -1569,7 +1569,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', paddingBottom: '100px' }}>
       <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '8px' }}>{t.back}</button>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#111827', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '8px' }}>{t.back}</button>
         <div style={{ fontSize: '16px', fontWeight: '700' }}>Gate 1 - {lang === 'es' ? 'Pre-cierre' : 'Pre-close'}</div>
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>{lang === 'es' ? `Lista de ${requiredCount} puntos requerida` : `${requiredCount}-point checklist required`}</div>
       </div>
@@ -1591,13 +1591,13 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
           <div style={{ fontSize: '13px', fontWeight: '700', color: '#1B3A6B', marginBottom: '4px' }}>
             🔗 {lang === 'es' ? 'Vincular activo' : 'Link Asset'}
           </div>
-          <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '10px' }}>
+          <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '10px' }}>
             {lang === 'es' ? 'Selecciona el activo en el que trabajaste' : 'Select the asset you worked on — updates health score and CapEx forecast automatically'}
           </div>
           {assetsLoading ? (
-            <div style={{ fontSize: '12px', color: '#94a3b8' }}>Loading assets...</div>
+            <div style={{ fontSize: '12px', color: '#64748b' }}>Loading assets...</div>
           ) : unitAssets.length === 0 ? (
-            <div style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>No assets registered for this unit.</div>
+            <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>No assets registered for this unit.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {unitAssets.map(asset => {
@@ -1636,7 +1636,7 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
               <div style={{ position: 'absolute', top: '2px', left: capitalEnabled ? '22px' : '2px', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
             </button>
           </div>
-          <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: capitalEnabled ? '14px' : '0' }}>
+          <div style={{ fontSize: '11px', color: '#64748b', marginBottom: capitalEnabled ? '14px' : '0' }}>
             {lang === 'es' ? 'Este trabajo es de capital (instalacion, reemplazo mayor)' : 'Flag this job as capital work — pushes labor hours to CapEx report'}
           </div>
           {capitalEnabled && (
@@ -1663,11 +1663,11 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
                 rows={2}
                 style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '13px', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
               {capitalEnabled && !capitalCategory && (
-                <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '6px', fontWeight: '600' }}>
+                <div style={{ fontSize: '11px', color: '#b45309', marginTop: '6px', fontWeight: '600' }}>
                   {lang === 'es' ? 'Selecciona una categoria para continuar' : 'Select a category to submit'}
                 </div>
               )}
-              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '8px' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '8px' }}>
                 {lang === 'es' ? 'Las horas se calculan automaticamente desde el inicio del trabajo' : 'Labor hours auto-calculated from check-in timestamp'}
               </div>
             </div>
@@ -1694,8 +1694,8 @@ function Gate1Screen({  job, tech, token, checkInData, diagData, onComplete, onB
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '13px', color: checked[i] ? '#6b7280' : '#374151', textDecoration: checked[i] ? 'line-through' : 'none' }}>{item}</div>
-                  {i === 0 && <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{lang === 'es' ? `${checkInData?.photos?.length || 0} foto(s) capturada(s)` : `${checkInData?.photos?.length || 0} captured`}</div>}
-                  {i === 1 && <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>{lang === 'es' ? `${afterPhotos.length} foto(s) posterior(es)` : `${afterPhotos.length} after photos`}</div>}
+                  {i === 0 && <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>{lang === 'es' ? `${checkInData?.photos?.length || 0} foto(s) capturada(s)` : `${checkInData?.photos?.length || 0} captured`}</div>}
+                  {i === 1 && <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>{lang === 'es' ? `${afterPhotos.length} foto(s) posterior(es)` : `${afterPhotos.length} after photos`}</div>}
                 </div>
                 {isAuto && <span style={{ fontSize: '10px', color: '#14B8A6', fontWeight: '700' }}>AUTO</span>}
               </div>
@@ -2140,7 +2140,7 @@ function VideoCallScreen({ job, token, roomName, onBack, lang }) {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0f1f3d', display: 'flex', flexDirection: 'column' }}>
       <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button onClick={handleHangUp} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: '14px', padding: 0 }}>← Back</button>
+        <button onClick={handleHangUp} style={{ background: 'none', border: 'none', color: '#111827', cursor: 'pointer', fontSize: '14px', padding: 0 }}>← Back</button>
         <div style={{ fontSize: '15px', fontWeight: '700' }}>📹 Video Call</div>
         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>Unit {job.unit_number}</div>
       </div>
@@ -2234,7 +2234,7 @@ function AdminDashboard({ tech, token, onLogout, lang, setLang }) {
   if (selectedTech) return (
     <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: '430px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
       <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px' }}>
-        <button onClick={() => { setSelectedTech(null); setTechJobs([]); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '12px' }}>← Back to Team</button>
+        <button onClick={() => { setSelectedTech(null); setTechJobs([]); }} style={{ background: 'none', border: 'none', color: '#111827', cursor: 'pointer', fontSize: '14px', padding: 0, marginBottom: '12px' }}>← Back to Team</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '48px', height: '48px', backgroundColor: '#14B8A6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '16px' }}>
             {getInitials(selectedTech)}
@@ -2300,7 +2300,7 @@ function AdminDashboard({ tech, token, onLogout, lang, setLang }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <LangToggle lang={lang} setLang={setLang} />
-          <button style={{ background: 'none', border: '1px solid rgba(255,255,255,0.4)', color: 'white', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }} onClick={onLogout}>Log Out</button>
+          <button style={{ background: 'none', border: '1px solid rgba(255,255,255,0.4)', color: '#111827', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }} onClick={onLogout}>Log Out</button>
         </div>
       </div>
 
@@ -2322,17 +2322,17 @@ function AdminDashboard({ tech, token, onLogout, lang, setLang }) {
                 <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '16px', fontWeight: '800', color: t.current_job_count > 3 ? '#f97316' : '#1B3A6B' }}>{t.current_job_count || 0}</div>
-                    <div style={{ fontSize: '10px', color: '#9ca3af' }}>Active</div>
+                    <div style={{ fontSize: '10px', color: '#6b7280' }}>Active</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '16px', fontWeight: '800', color: getSatColor(t.satisfaction_avg) }}>
                       {t.satisfaction_avg > 0 ? `${Number(t.satisfaction_avg).toFixed(1)}★` : '—'}
                     </div>
-                    <div style={{ fontSize: '10px', color: '#9ca3af' }}>Sat.</div>
+                    <div style={{ fontSize: '10px', color: '#6b7280' }}>Sat.</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '16px', fontWeight: '800', color: '#1B3A6B' }}>{t.satisfaction_count || 0}</div>
-                    <div style={{ fontSize: '10px', color: '#9ca3af' }}>Reviews</div>
+                    <div style={{ fontSize: '10px', color: '#6b7280' }}>Reviews</div>
                   </div>
                 </div>
               </div>
@@ -2409,7 +2409,7 @@ function JobHistoryScreen({ tech, token, lang, onBack }) {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', paddingBottom: '40px' }}>
       <div style={{ backgroundColor: '#1B3A6B', color: 'white', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer', padding: '0' }}>←</button>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#111827', fontSize: '20px', cursor: 'pointer', padding: '0' }}>←</button>
         <span style={{ fontWeight: '700', fontSize: '17px' }}>📋 {lang === 'es' ? 'Historial' : 'Job History'}</span>
       </div>
       {loading && (
@@ -2430,7 +2430,7 @@ function JobHistoryScreen({ tech, token, lang, onBack }) {
               <span style={{ backgroundColor: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: '700' }}>✓ Complete</span>
             </div>
             <p style={{ margin: '0 0 4px', color: '#111827', fontSize: '13px' }}>{job.description}</p>
-            <div style={{ color: '#9ca3af', fontSize: '11px' }}>
+            <div style={{ color: '#6b7280', fontSize: '11px' }}>
               {job.property_name} · {job.updated_at ? new Date(job.updated_at).toLocaleDateString() : ''}
             </div>
           </div>
@@ -2959,7 +2959,7 @@ function App() {
             <div style={{ color: '#185FA5', fontSize: '10px', fontWeight: '700', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Technician Portal</div>
           </div>
           <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'flex-end', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
-            <button onClick={() => setSidebarHidden(true)} title='Hide sidebar' style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', fontSize: '14px', fontWeight: '700', padding: '4px 8px', lineHeight: 1, borderRadius: '4px' }}>{'<<'}</button>
+            <button onClick={() => setSidebarHidden(true)} title='Hide sidebar' style={{ background: 'none', border: 'none', color: '#111827', cursor: 'pointer', fontSize: '14px', fontWeight: '700', padding: '4px 8px', lineHeight: 1, borderRadius: '4px' }}>{'<<'}</button>
           </div>
           {/* Tech info */}
           <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -3110,7 +3110,7 @@ function App() {
       {screen === 'history' && (
         <div style={{ padding: '8px 16px' }}>
           <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '800', color: '#111827' }}>🕐 Job History</h2>
-          <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0', color: '#94a3b8' }}>
+          <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0', color: '#64748b' }}>
             <div style={{ fontSize: '32px', marginBottom: '10px' }}>🕐</div>
             <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>Completed jobs appear here</div>
           </div>
@@ -3119,7 +3119,7 @@ function App() {
       {screen === 'tasks' && (
         <div style={{ padding: '8px 16px' }}>
           <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '800', color: '#111827' }}>✅ Tasks</h2>
-          <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0', color: '#94a3b8' }}>
+          <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0', color: '#64748b' }}>
             <div style={{ fontSize: '32px', marginBottom: '10px' }}>✅</div>
             <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>Your tasks will appear here</div>
           </div>
@@ -3251,7 +3251,7 @@ function ScoreboardScreen({ tech, token, myScore, lang, onBack }) {
         <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '40px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
           <div style={{ fontSize: '32px', marginBottom: '10px' }}>📊</div>
           <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>No scores yet this month</div>
-          <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>Complete jobs to start earning Fixy Score points</div>
+          <div style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>Complete jobs to start earning Fixy Score points</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

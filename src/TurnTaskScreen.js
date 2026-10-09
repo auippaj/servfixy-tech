@@ -64,7 +64,7 @@ export default function TurnTaskScreen({ turn, token, tech, onBack, onDone }) {
       <div style={{ backgroundColor: NAVY, padding: '16px 20px' }}>
         <button
           onClick={onBack}
-          style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer', padding: 0, marginBottom: '10px' }}
+          style={{ background: 'none', border: 'none', color: '#111827', fontSize: '20px', cursor: 'pointer', padding: 0, marginBottom: '10px' }}
         >
           ←
         </button>
@@ -256,7 +256,7 @@ export default function TurnTaskScreen({ turn, token, tech, onBack, onDone }) {
             style={{
               width: '100%',
               backgroundColor: TEAL,
-              color: 'white',
+              color: '#111827',
               border: 'none',
               borderRadius: '10px',
               padding: '16px',

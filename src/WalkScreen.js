@@ -94,7 +94,7 @@ function RoomScreen({ room, roomIndex, totalRooms, onNext, onBack, isLast, turnI
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
       <div style={{ backgroundColor: NAVY, padding: '16px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-          <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer', padding: 0 }}>&#8592;</button>
+          <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#111827', fontSize: '20px', cursor: 'pointer', padding: 0 }}>&#8592;</button>
           <div>
             <div style={{ color: 'white', fontWeight: 'bold', fontSize: '16px' }}>{room.label}</div>
             <div style={{ color: '#94a3b8', fontSize: '12px' }}>Room {roomIndex + 1} of {totalRooms}</div>
@@ -172,7 +172,7 @@ function RoomScreen({ room, roomIndex, totalRooms, onNext, onBack, isLast, turnI
 
       <div style={{ padding: '16px', backgroundColor: 'white', borderTop: '1px solid #e2e8f0' }}>
         {!allAnswered && (
-          <div style={{ color: '#94a3b8', fontSize: '12px', textAlign: 'center', marginBottom: '10px' }}>
+          <div style={{ color: '#64748b', fontSize: '12px', textAlign: 'center', marginBottom: '10px' }}>
             Rate all items to continue
           </div>
         )}
@@ -199,7 +199,7 @@ function SummaryScreen({ rooms, allAssessments, unitNumber, walkType, onSubmit, 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
       <div style={{ backgroundColor: NAVY, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer', padding: 0 }}>&#8592;</button>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#111827', fontSize: '20px', cursor: 'pointer', padding: 0 }}>&#8592;</button>
         <div>
           <div style={{ color: 'white', fontWeight: 'bold', fontSize: '16px' }}>Walk Summary</div>
           <div style={{ color: '#94a3b8', fontSize: '12px' }}>Unit {unitNumber} — {walkType === 'notice' ? 'Notice Walk' : 'Move-Out Walk'}</div>
