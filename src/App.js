@@ -120,6 +120,9 @@ addPhotoToContinue: 'Add 2 photos to continue',
     addNote: 'Add Note (optional)',
     notesPlaceholder: 'Notes about this job...',
     markEnRoute: '🚗 Mark En Route / In Progress',
+    onMyWay: '🚗 On my way',
+    onMyWaySent: '✅ Resident notified you are on the way',
+    onMyWayFail: 'Could not notify the resident. Please try again.',
     markComplete: '✅ Mark Complete',
     jobComplete: 'Job Complete',
     failStatus: 'Failed to update status',
@@ -210,6 +213,9 @@ addPhotoToContinue: 'Agrega 2 fotos para continuar',
     addNote: 'Agregar nota (opcional)',
     notesPlaceholder: 'Notas sobre este trabajo...',
     markEnRoute: '🚗 Marcar en camino / En progreso',
+    onMyWay: '🚗 Voy en camino',
+    onMyWaySent: '✅ Se notificó al residente que va en camino',
+    onMyWayFail: 'No se pudo notificar al residente. Intente de nuevo.',
     markComplete: '✅ Marcar completado',
     jobComplete: 'Trabajo completado',
     failStatus: 'Error al actualizar el estado',
@@ -1803,6 +1809,41 @@ function SubmittedScreen({ job, tech, token, checkInData, diagData, gate1Data, o
   );
 }
 
+// ── OnMyWayButton — tells the resident the tech is heading over (Touch 3, once only) ──
+function OnMyWayButton({ job, token, lang }) {
+  const t = STRINGS[lang];
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  if (job.status !== 'dispatched' && job.status !== 'scheduled') return null;
+  if (sent) {
+    return <div style={{ color: '#86efac', fontSize: '13px', fontWeight: '600', textAlign: 'center', marginBottom: '10px' }}>{t.onMyWaySent}</div>;
+  }
+  const handleTap = async () => {
+    haptic([15, 50, 15]);
+    setBusy(true);
+    try {
+      await axios.post(`${API}/service-requests/${job.id}/on-my-way`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      setSent(true);
+    } catch (err) {
+      if (!navigator.onLine) {
+        // Offline: queue it so the resident is notified as soon as the tech has signal again
+        await enqueue({ type: 'on_my_way', url: `/service-requests/${job.id}/on-my-way`, method: 'POST', payload: {} }).catch(() => {});
+        setSent(true);
+      } else {
+        alert(t.onMyWayFail);
+      }
+    }
+    setBusy(false);
+  };
+  return (
+    <button
+      style={{ backgroundColor: busy ? '#64748b' : '#0ea5e9', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: busy ? 'not-allowed' : 'pointer', width: '100%', marginBottom: '10px' }}
+      onClick={handleTap}
+      disabled={busy}
+    >{t.onMyWay}</button>
+  );
+}
+
 function JobDetailPanel({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVideoCall, lang }) {
   const t = STRINGS[lang];
   const tier = getTier(job);
@@ -1925,6 +1966,7 @@ function JobDetailPanel({ job, token, tech, onBack, onStatusUpdate, onCheckIn, o
             <div style={{ backgroundColor: '#1B3A6B', borderRadius: '12px', padding: '18px' }}>
               <div style={{ color: 'white', fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>{t.readyToStart}</div>
               <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '12px', marginBottom: '14px' }}>{t.checkInRequired}</div>
+              <OnMyWayButton job={job} token={token} lang={lang} />
               <button style={{ backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', width: '100%' }} onClick={() => { haptic([15,50,15]); onCheckIn(); }}>
                 {t.beginCheckIn}
               </button>
@@ -2047,6 +2089,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
         <div style={{ backgroundColor: '#1B3A6B', borderRadius: '10px', padding: '20px', margin: '0 12px 12px', boxShadow: '0 2px 8px rgba(27,58,107,0.25)' }}>
           <div style={{ color: 'white', fontWeight: '700', fontSize: '15px', marginBottom: '4px' }}>{t.readyToStart}</div>
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', marginBottom: '16px' }}>{t.checkInRequired}</div>
+          <OnMyWayButton job={job} token={token} lang={lang} />
           <button style={{ backgroundColor: '#14B8A6', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%' }} onClick={() => { haptic([15, 50, 15]); onCheckIn(); }}>{t.beginCheckIn}</button>
           {job.status === 'in_progress' && job.tech_checked_in && <button style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '13px', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', width: '100%', marginTop: '10px' }} onClick={() => onVideoCall(job)}>📹 Start Video Call</button>}
         </div>
