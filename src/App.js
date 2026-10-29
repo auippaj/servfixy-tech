@@ -25,6 +25,30 @@ const tierColor = { LS: '#dc2626', '1': '#f97316', '2': '#facc15', '3': '#94a3b8
 const tierLabel = { LS: 'LS - Life Safety', '1': 'Tier 1 - Urgent', '2': 'Tier 2 - Moderate', '3': 'Tier 3 - Routine' };
 const tierLabelEs = { LS: 'LS - Seguridad Vital', '1': 'Nivel 1 - Urgente', '2': 'Nivel 2 - Moderado', '3': 'Nivel 3 - Rutina' };
 
+// Resident's answers about entry and pets, shown to the technician before arrival.
+const ENTRY_LABELS = {
+  en: { enter_if_not_home: 'May enter if resident is not home', call_first: 'Call resident before entering', must_be_home: 'Resident must be home' },
+  es: { enter_if_not_home: 'Puede entrar si el residente no esta en casa', call_first: 'Llamar al residente antes de entrar', must_be_home: 'El residente debe estar en casa' },
+};
+const PET_LABELS = { en: { none: 'No pets', dog: 'Dog', cat: 'Cat', other: 'Other pet' }, es: { none: 'Sin mascotas', dog: 'Perro', cat: 'Gato', other: 'Otra mascota' } };
+function entryPetsText(job, lang) {
+  const l = lang === 'es' ? 'es' : 'en';
+  const entry = job.entry_permission ? (ENTRY_LABELS[l][job.entry_permission] || null) : null;
+  const pets = job.pets_in_unit ? job.pets_in_unit.split(',').map(x => PET_LABELS[l][x]).filter(Boolean).join(', ') : null;
+  return { entry, pets };
+}
+function EntryPetsBlock({ job, lang, compact }) {
+  const { entry, pets } = entryPetsText(job, lang);
+  if (!entry && !pets) return null;
+  return (
+    <div style={{ marginBottom: compact ? '10px' : '12px' }}>
+      <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>🚪 {lang === 'es' ? 'Entrada y mascotas' : 'Entry and pets'}</div>
+      {entry && <div style={{ fontSize: '14px', color: '#1B3A6B', fontWeight: '600' }}>{entry}</div>}
+      {pets && <div style={{ fontSize: '14px', color: '#374151' }}>{pets}</div>}
+    </div>
+  );
+}
+
 function getTier(job) {
   if (job.tier) return String(job.tier);
   if (job.priority === 'emergency') return 'LS';
@@ -1913,6 +1937,7 @@ function JobDetailPanel({ job, token, tech, onBack, onStatusUpdate, onCheckIn, o
                 <div style={{ fontSize: '13px', color: '#374151', lineHeight: '1.5' }}>{job.triage_assessment}</div>
               </div>
             )}
+            <EntryPetsBlock job={job} lang={typeof lang === 'string' ? lang : 'en'} />
             {job.location_room && (
               <div style={{ marginBottom: '12px' }}>
                 <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>📍 Location</div>
@@ -2032,7 +2057,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
         <p style={{ margin: '0 0 16px', color: '#374151' }}>{job.description}</p>
 
         {/* Packaged Service Order */}
-        {(job.triage_assessment || job.description || (job.photo_urls && job.photo_urls.length > 0) || job.location_room) && (
+        {(job.triage_assessment || job.description || (job.photo_urls && job.photo_urls.length > 0) || job.location_room || job.entry_permission || job.pets_in_unit) && (
           <div style={{ backgroundColor: '#f0f4ff', borderRadius: '10px', padding: '14px', marginBottom: '16px', border: '1px solid #c7d7f5' }}>
             <div style={{ fontSize: '11px', fontWeight: '800', color: '#1B3A6B', letterSpacing: '1px', marginBottom: '12px', textTransform: 'uppercase' }}>
               📋 {lang === 'es' ? 'Paquete de Servicio' : 'Service Brief'}
@@ -2052,6 +2077,7 @@ function JobDetail({ job, token, tech, onBack, onStatusUpdate, onCheckIn, onVide
               </div>
             )}
 
+            <EntryPetsBlock job={job} lang={lang} compact />
             {job.location_room && (
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '10px', fontWeight: '700', color: '#6b7280', marginBottom: '4px', textTransform: 'uppercase' }}>📍 {lang === 'es' ? 'Ubicacion' : 'Location'}</div>
